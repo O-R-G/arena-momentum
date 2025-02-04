@@ -1,0 +1,9 @@
+# Ignore actual config file with sensitive data
+api/config.php
+
+# Ignore generated schedule and cache
+api/data/schedule.txt
+api/cache/*
+!api/cache/.gitkeep
+api/data/*
+!api/data/.gitkeep 
