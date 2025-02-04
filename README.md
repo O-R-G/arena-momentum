@@ -32,6 +32,12 @@ This project creates a synchronized slideshow from Are.na channels. It fetches c
    ```
    If successful, you should see the configured slide duration printed.
 
+6. Generate the daily schedule:
+   ```bash
+   php api/generate_schedule.php
+   ```
+   This will fetch all channels, collect image blocks, and create a randomized daily schedule.
+
 ## Project Structure
 
 - `api/` - Backend PHP scripts
@@ -50,8 +56,3 @@ This project creates a synchronized slideshow from Are.na channels. It fetches c
 - `paths.schedule_file` - Where the daily schedule is stored
 - `paths.cache_dir` - Where downloaded images are cached
 
-## Development
-
-This project is designed to be simple and maintainable. Each component is separated into its own file with clear responsibilities.
-
-[More documentation to come as we build additional features...]

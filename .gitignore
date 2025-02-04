@@ -2,7 +2,7 @@
 api/config.php
 
 # Ignore generated schedule and cache
-api/data/schedule.txt
+api/data/schedule.json
 api/cache/*
 !api/cache/.gitkeep
 api/data/*
