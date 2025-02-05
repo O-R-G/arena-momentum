@@ -1,0 +1,14 @@
+body {            
+	font-family: hershey, Helvetica, Arial, sans-serif;
+	font-size: 18px;
+	line-height: 22px;	
+	-webkit-font-smoothing: subpixel-antialiased;
+	-webkit-text-size-adjust: 100%;
+    color: #FFF;
+    background-color: #000;
+}
+
+canvas {
+    /* width: 400px; */
+    /* border: 1px solid red; */
+}

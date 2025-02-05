@@ -1,0 +1,9 @@
+100 - ultralight
+200 - thin
+300 - light
+400 - regular (normal)
+500 - medium
+600 - semibold
+700 - bold (bold)
+800 - heavy
+900 - black
