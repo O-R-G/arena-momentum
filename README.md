@@ -23,7 +23,7 @@ This project creates a synchronized slideshow from Are.na channels. It fetches c
 
 4. Edit `api/config.php` and add:
    - Your Are.na access token (get it from https://dev.are.na/oauth/applications)
-   - Your Are.na group ID
+   - Your Are.na user ID (the user ID of the account you want to fetch content from)
    - Adjust other settings as needed
 
 5. Test your configuration:
