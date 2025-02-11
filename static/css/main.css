@@ -6,9 +6,142 @@ body {
 	-webkit-text-size-adjust: 100%;
     color: #FFF;
     background-color: #000;
+    margin: 0;
+    padding: 0;
 }
 
 canvas {
-    /* width: 400px; */
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1;
+}
+
+p {
+    position: relative;
+    z-index: 1;
+}
+
+#slideshow {
     /* border: 1px solid red; */
+}
+
+#slideshow img {
+    /* border: 1px solid blue; */
+}
+
+#slideshow .slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  object-fit: cover;
+  z-index: 0;
+  background: black;
+}
+
+#slideshow .slide.active {
+  opacity: 1;
+  z-index: 1;
+}
+
+#slideshow .slide.previous {
+  z-index: 0;
+}
+
+#info-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1;
+  font-family: hershey, sans-serif;
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+#info-overlay.hidden {
+  opacity: 0;
+}
+
+#info-overlay a {
+  color: white;
+  text-decoration: none;
+}
+
+#info-overlay a:hover {
+  text-decoration: underline;
+}
+
+#info-overlay .channel {
+  opacity: 0.7;
+  margin-left: 10px;
+}
+
+#schedule-overlay {
+  position: fixed;
+  top: 0;
+  left: -420px;  /* Increased to be completely off screen (400px width + 20px padding) */
+  bottom: 0;
+  width: 400px;
+  background: rgba(255, 255, 255, 1);
+  z-index: 2;
+  overflow-y: auto;
+  transition: transform 0.3s ease-in-out;
+  color: #000;
+  font-family: hershey, sans-serif;
+}
+
+/* Show on hover */
+#schedule-hover-area {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 20px;
+  z-index: 2;
+}
+
+#schedule-hover-area:hover + #schedule-overlay,
+#schedule-overlay:hover {
+  transform: translateX(420px);  /* Match the new offset */
+}
+
+.schedule-item {
+  margin-bottom: 10px;
+  padding: 10px;
+  color: #aaa;  /* Default gray */
+  transition: opacity 0.3s;
+}
+
+.schedule-item.current {
+  opacity: 1;
+  color: #F00;
+}
+
+.schedule-item.upcoming {
+  color: #000;
+}
+
+.schedule-item .time {
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+.schedule-item .title,
+.schedule-item .channel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 360px;  /* Leave some space for padding */
+}
+
+.schedule-item .channel {
+  opacity: 0.7;
+  font-size: 0.9em;
 }

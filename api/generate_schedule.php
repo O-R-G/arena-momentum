@@ -63,6 +63,9 @@ class ScheduleGenerator {
   }
   
   public function generateSchedule() {
+    // Set timezone to match time.php
+    date_default_timezone_set('America/New_York');
+    
     // Get all blocks
     $blocks = $this->arena->getAllBlocks();
     
@@ -76,7 +79,7 @@ class ScheduleGenerator {
     // Generate schedule
     $schedule = [];
     $duration = $this->config['display']['slide_duration'];
-    $start_of_day = strtotime('today');
+    $start_of_day = strtotime('today midnight');  // Changed to explicitly use midnight
     $total_duration = count($blocks) * $duration;
     
     foreach ($blocks as $index => $block) {
@@ -94,53 +97,53 @@ class ScheduleGenerator {
         'total_duration' => $total_duration,
         'slide_duration' => $duration,
         'block_count' => count($blocks)
-        ]
-      ];
-    }
-    
-    public function saveSchedule($schedule) {
-      $schedule_file = $this->config['paths']['schedule_file'];
-      
-      // Create schedule directory if it doesn't exist
-      $dir = dirname($schedule_file);
-      if (!file_exists($dir)) {
-        mkdir($dir, 0755, true);
-      }
-      
-      // Save schedule as JSON
-      if (!file_put_contents($schedule_file, json_encode($schedule))) {
-        throw new Exception("Failed to write schedule file");
-      }
-      
-      return true;
-    }
+      ]
+    ];
   }
   
-  // If this file is called directly, generate and save schedule
-  if (php_sapi_name() !== 'cli' || isset($argv[0])) {
-    try {
-      $config = require __DIR__ . '/bootstrap.php';
-      $generator = new ScheduleGenerator($config);
-      $schedule = $generator->generateSchedule();
-      $generator->saveSchedule($schedule);
-      
-      // Output depends on how we're running this
-      if (php_sapi_name() === 'cli') {
-        echo "Schedule generated successfully.\n";
-        echo "Total blocks: " . count($schedule['schedule']) . "\n";
-        echo "First block shows at: " . $schedule['schedule'][0]['time'] . "\n";
-        echo "Last block shows at: " . end($schedule['schedule'])['time'] . "\n";
-      } else {
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'schedule' => $schedule]);
-      }
-    } catch (Exception $e) {
-      if (php_sapi_name() === 'cli') {
-        echo "Error: " . $e->getMessage() . "\n";
-        exit(1);
-      } else {
-        http_response_code(500);
-        echo json_encode(['error' => $e->getMessage()]);
-      }
+  public function saveSchedule($schedule) {
+    $schedule_file = $this->config['paths']['schedule_file'];
+    
+    // Create schedule directory if it doesn't exist
+    $dir = dirname($schedule_file);
+    if (!file_exists($dir)) {
+      mkdir($dir, 0755, true);
     }
-  } 
+    
+    // Save schedule as JSON
+    if (!file_put_contents($schedule_file, json_encode($schedule))) {
+      throw new Exception("Failed to write schedule file");
+    }
+    
+    return true;
+  }
+}
+
+// If this file is called directly, generate and save schedule
+if (php_sapi_name() !== 'cli' || isset($argv[0])) {
+  try {
+    $config = require __DIR__ . '/bootstrap.php';
+    $generator = new ScheduleGenerator($config);
+    $schedule = $generator->generateSchedule();
+    $generator->saveSchedule($schedule);
+    
+    // Output depends on how we're running this
+    if (php_sapi_name() === 'cli') {
+      echo "Schedule generated successfully.\n";
+      echo "Total blocks: " . count($schedule['schedule']) . "\n";
+      echo "First block shows at: " . $schedule['schedule'][0]['time'] . "\n";
+      echo "Last block shows at: " . end($schedule['schedule'])['time'] . "\n";
+    } else {
+      header('Content-Type: application/json');
+      echo json_encode(['success' => true, 'schedule' => $schedule]);
+    }
+  } catch (Exception $e) {
+    if (php_sapi_name() === 'cli') {
+      echo "Error: " . $e->getMessage() . "\n";
+      exit(1);
+    } else {
+      http_response_code(500);
+      echo json_encode(['error' => $e->getMessage()]);
+    }
+  }
+} 

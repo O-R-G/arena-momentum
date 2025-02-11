@@ -56,3 +56,12 @@ This project creates a synchronized slideshow from Are.na channels. It fetches c
 - `paths.schedule_file` - Where the daily schedule is stored
 - `paths.cache_dir` - Where downloaded images are cached
 
+## Running
+
+Start a local PHP server:
+```bash
+php -S localhost:8000
+```
+
+Then open http://localhost:8000 in your browser.
+
