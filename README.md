@@ -1,6 +1,6 @@
 # Are.na Momentum
 
-This project creates a synchronized slideshow from Are.na channels. It fetches content daily from a specified Are.na group, generates a schedule, and displays the content in a synchronized way across multiple devices.
+This project creates a synchronized slideshow from Are.na channels. It fetches content daily from a specified Are.na profile, generates a schedule, and displays the content in a synchronized way across multiple devices.
 
 ## Setup
 
