@@ -48,8 +48,8 @@ class Slideshow {
       const response = await fetch('/api/data/schedule.json');
       this.schedule = await response.json();
       
-      // Create schedule overlay after loading schedule
-      this.createScheduleOverlay();
+      // Create schedule grid
+      this.createScheduleGrid();
       
       // Start the slideshow
       this.determineCurrentSlide();
@@ -150,7 +150,8 @@ class Slideshow {
       console.log('Creating container');
       this.container = document.createElement('div');
       this.container.id = 'slideshow';
-      this.container.style.cssText = `        position: fixed;
+      this.container.style.cssText = `
+        position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
@@ -158,7 +159,16 @@ class Slideshow {
         z-index: 0;
         background: black;
         overflow: hidden;
+        cursor: pointer;
       `;
+      
+      // Add click handler to container
+      this.container.addEventListener('click', () => {
+        const currentSlide = this.schedule.schedule[this.currentIndex];
+        const blockUrl = `https://www.are.na/block/${currentSlide.block.id}`;
+        window.open(blockUrl, '_blank');
+      });
+      
       document.body.insertBefore(this.container, document.body.firstChild);
     }
 
@@ -202,28 +212,15 @@ class Slideshow {
       
       console.log('Now showing:', slide.block.title, 'from', slide.block.channel_title);
       
-      // Create info overlay if it doesn't exist
-      if (!this.infoOverlay) {
-        this.infoOverlay = document.createElement('div');
-        this.infoOverlay.id = 'info-overlay';
-        document.body.appendChild(this.infoOverlay);
-        
-        // Hide overlay when clicked
-        this.infoOverlay.addEventListener('click', () => {
-          this.infoOverlay.classList.add('hidden');
-        });
+      // Update schedule grid to reflect current slide
+      this.updateScheduleGrid();
+      
+      // Scroll current slide into view if grid is visible
+      const grid = document.getElementById('schedule-grid');
+      const currentItem = grid.querySelector('.item.current');
+      if (currentItem && grid.style.opacity === '1') {
+        currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      
-      // Update info overlay
-      const blockUrl = `https://www.are.na/block/${slide.block.id}`;
-      this.infoOverlay.innerHTML = `
-        <a href="${blockUrl}" target="_blank">${slide.block.title || 'Untitled'}</a>
-        <span class="channel">${slide.block.channel_title}</span>
-      `;
-      this.infoOverlay.classList.remove('hidden');
-      
-      // Update schedule overlay to show current position
-      this.updateScheduleOverlay();
     } catch (error) {
       console.error('Error loading image:', error);
     }
@@ -272,56 +269,40 @@ class Slideshow {
     return now + this.serverTimeOffset;
   }
 
-  createScheduleOverlay() {
-    // Create hover area
-    const hoverArea = document.createElement('div');
-    hoverArea.id = 'schedule-hover-area';
-    document.body.appendChild(hoverArea);
-    
-    // Create overlay
-    const overlay = document.createElement('div');
-    overlay.id = 'schedule-overlay';
-    document.body.appendChild(overlay);
-    
-    // Populate schedule
-    this.updateScheduleOverlay();
+  createScheduleGrid() {
+    // Just populate the schedule
+    this.updateScheduleGrid();
   }
   
-  updateScheduleOverlay() {
-    const overlay = document.getElementById('schedule-overlay');
+  updateScheduleGrid() {
+    const grid = document.getElementById('schedule-grid');
     const schedule = this.schedule.schedule;
-    const now = this.getCurrentTime();
     
-    overlay.innerHTML = schedule.map((slide, index) => {
+    grid.innerHTML = schedule.map((slide, index) => {
       const isCurrent = index === this.currentIndex;
-      const isUpcoming = index > this.currentIndex;
       const isPast = index < this.currentIndex;
-      
-      const className = `schedule-item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''} ${isUpcoming ? 'upcoming' : ''}`;
+      const className = `item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}`;
       
       return `
-        <div class="${className}" ${isCurrent ? 'id="current-slide"' : ''}>
+        <div class="${className}">
           <div class="title">${slide.block.title || 'Untitled'}</div>
           <div class="channel">${slide.block.channel_title}</div>
         </div>
       `;
     }).join('');
-    
-    // Scroll current slide into view
-    const currentSlide = overlay.querySelector('#current-slide');
-    if (currentSlide) {
-      requestAnimationFrame(() => {
-        const overlayHeight = overlay.clientHeight;
-        const slideTop = currentSlide.offsetTop;
-        const slideHeight = currentSlide.clientHeight;
-        
-        // Calculate position to center the slide
-        const targetScroll = slideTop - (overlayHeight / 2) + (slideHeight / 2);
-        
-        overlay.scrollTo({
-          top: targetScroll,
-          behavior: 'smooth'
-        });
+
+    // Scroll to current item horizontally
+    const currentItem = grid.querySelector('.item.current');
+    if (currentItem && grid.style.opacity === '1') {
+      // Calculate which column the current item is in
+      const itemBounds = currentItem.getBoundingClientRect();
+      const gridBounds = grid.getBoundingClientRect();
+      const columnWidth = 300 + 40; // column width + gap
+      const targetColumn = Math.floor(itemBounds.left / columnWidth);
+      
+      grid.scrollTo({
+        left: targetColumn * columnWidth,
+        behavior: 'smooth'
       });
     }
   }
