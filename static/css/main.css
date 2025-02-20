@@ -19,6 +19,7 @@ canvas {
 
 p {
     position: relative;
+    margin-block-start: 0em;
     z-index: 1;
 }
 
@@ -58,12 +59,13 @@ p {
 #schedule-hover-area {
   display: none;  /* Or just delete these sections entirely */
 }
+/* End remove these sections */
 
 #schedule-info {
   position: fixed;
   top: 0;
   left: 0;
-  width: 300px;
+  width: auto;
   height: 100vh;
   background: #333;
   padding: 40px;
@@ -75,7 +77,14 @@ p {
   opacity: 0;
   pointer-events: none;
   z-index: 1;
+  columns: 300px 6;
+  column-gap: 44px;
+  padding: 2em;
+  transition: opacity 0.75s ease; 
 }
+
+
+/* Remove these sections */
 
 #schedule-info h1 {
   font-size: 18px;
@@ -97,6 +106,7 @@ p {
   columns: 300px auto;
   column-gap: 40px;
   width: calc(100vw - 380px);  /* Explicitly set width to prevent overlap */
+  display: none;    /* or just get rid of, using this for now */
 }
 
 #schedule-grid .item {
@@ -123,3 +133,5 @@ p {
   font-size: 12px;
   opacity: 0.7;
 }
+
+/* End remove these sections */

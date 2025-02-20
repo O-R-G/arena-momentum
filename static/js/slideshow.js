@@ -213,7 +213,7 @@ class Slideshow {
       console.log('Now showing:', slide.block.title, 'from', slide.block.channel_title);
       
       // Update schedule grid to reflect current slide
-      this.updateScheduleGrid();
+      // this.updateScheduleGrid();
       
       // Scroll current slide into view if grid is visible
       const grid = document.getElementById('schedule-grid');
@@ -271,9 +271,10 @@ class Slideshow {
 
   createScheduleGrid() {
     // Just populate the schedule
-    this.updateScheduleGrid();
+    // this.updateScheduleGrid();
   }
   
+  /*  
   updateScheduleGrid() {
     const grid = document.getElementById('schedule-grid');
     const schedule = this.schedule.schedule;
@@ -290,7 +291,7 @@ class Slideshow {
         </div>
       `;
     }).join('');
-
+    
     // Scroll to current item horizontally
     const currentItem = grid.querySelector('.item.current');
     if (currentItem && grid.style.opacity === '1') {
@@ -306,6 +307,7 @@ class Slideshow {
       });
     }
   }
+  */
 }
 
 // Initialize when page loads

@@ -104,9 +104,9 @@ function onFlip(isFlipped) {
   const grid = document.getElementById('schedule-grid');
   const info = document.getElementById('schedule-info');
   if (grid && info) {
-    grid.style.opacity = isFlipped ? '1' : '0';
+    grid.style.opacity = isFlipped ? '0.9' : '0';
     grid.style.pointerEvents = isFlipped ? 'auto' : 'none';
-    info.style.opacity = isFlipped ? '1' : '0';
+    info.style.opacity = isFlipped ? '0.9' : '0';
     info.style.pointerEvents = isFlipped ? 'auto' : 'none';
     
     // Scroll to current item when showing grid
