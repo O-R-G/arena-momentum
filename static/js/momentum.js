@@ -13,7 +13,11 @@ const text = "MOMENTUM";
 const radius = 75;
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
-var speed = 0.01;
+var speed_base = 0.01;
+var speed = speed_base;
+var decay = null;  // Reduce speed to base value
+var decay_duration = 5000;  // Two seconds
+var decay_timeout = null;
 var flipProgress = 0;
 var isFlipping = false;
 var isFlipped = false;  // Track if we're currently flipped
@@ -57,7 +61,20 @@ function draw_text() {
   }
   
   ctx.restore();
-  
+
+  // Decay speed to base rate   ** in progress **
+  if (decay) {        
+    const elapsed = performance.now() - decay;
+    if (elapsed < decay_duration) {
+      const t = elapsed / decay_duration; // Normalized time (0 to 1)
+      speed = speed * (1 - t) + speed_base * t; // Linear interpolation
+      console.log('** start decay t --> ' + t + ' speed --> ' + speed + ' **');
+    } else {            
+      speed = speed_base; // Ensure it reaches the base speed
+      decay = null;
+    }
+  }
+    
   // Only update rotation if not paused
   if (!isPaused) {
     // Update rotation based on direction
@@ -75,7 +92,7 @@ function draw_text() {
       onFlip(isFlipped);  // Call the new handler
     }
   }
-  
+
   requestAnimationFrame(draw_text);
 }
 
@@ -93,10 +110,28 @@ canvas.addEventListener('click', function() {
 
 // Keep existing keyboard controls
 document.addEventListener('keydown', function(event) {
-  if (event.key === 'ArrowLeft') 
+  if (event.key === 'ArrowLeft') {
     speed -= 0.025;
-  if (event.key === 'ArrowRight')
+    slideshow.shuttle(-1);
+    decay = null;
+    clearTimeout(decay_timeout);        
+    decay_timeout = setTimeout(() => {
+      decay = performance.now(); 
+      speed *= -1;
+      slideshow.determineCurrentSlide();
+    }, 2000);
+  }
+  if (event.key === 'ArrowRight') {
     speed += 0.025;
+    slideshow.shuttle(1);
+    decay = null;
+    clearTimeout(decay_timeout);        
+    decay_timeout = setTimeout(() => {
+      decay = performance.now(); 
+      speed *= -1;
+      slideshow.determineCurrentSlide();
+    }, 2000);
+  }
 });
 
 function onFlip(isFlipped) {

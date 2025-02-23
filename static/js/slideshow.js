@@ -13,6 +13,7 @@ class Slideshow {
     this.serverTimeOffset = 0;
     this.lastSync = 0;
     this.hasLoggedTimes = false;
+    this.slideshow = null;
   }
 
   async syncTime() {
@@ -49,8 +50,8 @@ class Slideshow {
       this.schedule = await response.json();
       
       // Create schedule grid
-      this.createScheduleGrid();
-      
+      // this.createScheduleGrid();
+
       // Start the slideshow
       this.determineCurrentSlide();
       this.preloadUpcoming();
@@ -269,11 +270,13 @@ class Slideshow {
     return now + this.serverTimeOffset;
   }
 
+  /*
   createScheduleGrid() {
     // Just populate the schedule
-    // this.updateScheduleGrid();
+    this.updateScheduleGrid();
   }
-  
+  */
+
   /*  
   updateScheduleGrid() {
     const grid = document.getElementById('schedule-grid');
@@ -308,10 +311,16 @@ class Slideshow {
     }
   }
   */
+
+  // Adjust slideshow playhead 
+  async shuttle(direction) {
+    slideshow.currentIndex += direction;
+    slideshow.showSlide(slideshow.currentIndex);
+  }
 }
 
 // Initialize when page loads
 window.addEventListener('load', () => {
-  const slideshow = new Slideshow();
+  slideshow = new Slideshow();
   slideshow.init();
 }); 
