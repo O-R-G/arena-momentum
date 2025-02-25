@@ -9,6 +9,7 @@ class Slideshow {
     this.schedule = null;
     this.currentIndex = 0;
     this.preloadedImages = new Map();
+    this.preloadedVideos = new Map();
     this.currentImage = null;
     this.serverTimeOffset = 0;
     this.lastSync = 0;
@@ -124,10 +125,16 @@ class Slideshow {
     const schedule = this.schedule.schedule;
     const preloadCount = this.schedule.metadata.preload_count || 3;
     
-    // Preload next few images
+    // Preload next few slides
     for (let i = 1; i <= preloadCount; i++) {
       const nextIndex = (this.currentIndex + i) % schedule.length;
-      this.preloadImage(schedule[nextIndex].block.image_url);
+      const slide = schedule[nextIndex];
+      
+      if (slide.block.type === 'Image') {
+        this.preloadImage(slide.block.image_url);
+      } else if (slide.block.type === 'Media') {
+        this.preloadVideo(slide);
+      }
     }
   }
 
@@ -136,6 +143,38 @@ class Slideshow {
       const img = new Image();
       img.src = url;
       this.preloadedImages.set(url, img);
+    }
+  }
+
+  async preloadVideo(slide) {
+    if (!this.preloadedVideos.has(slide.block.id)) {
+      // Create wrapper and iframe
+      const wrapper = document.createElement('div');
+      wrapper.className = 'slide preloading';
+      wrapper.style.display = 'none';  // Hide while preloading
+      
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('width', '100%');
+      iframe.setAttribute('height', '100%');
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'autoplay; fullscreen');
+      
+      // Extract the original src
+      const embedHtml = slide.block.embed_html;
+      const srcMatch = embedHtml.match(/src="([^"]+)"/);
+      
+      if (srcMatch && srcMatch[1]) {
+        let src = srcMatch[1];
+        src = src.includes('?') ? src + '&' : src + '?';
+        src += 'autoplay=1&background=1&muted=1';
+        iframe.setAttribute('src', src);
+      }
+      
+      wrapper.appendChild(iframe);
+      this.preloadedVideos.set(slide.block.id, wrapper);
+      
+      // Add to DOM but keep hidden
+      this.container.appendChild(wrapper);
     }
   }
 
@@ -173,7 +212,7 @@ class Slideshow {
       document.body.insertBefore(this.container, document.body.firstChild);
     }
 
-    // Create new slide element based on type
+    // Create or get slide element based on type
     let newElement;
     
     try {
@@ -188,34 +227,33 @@ class Slideshow {
           newElement.src = slide.block.image_url;
         });
       } else if (type === 'Media') {
-        // Create a wrapper div for the video
-        newElement = document.createElement('div');
-        newElement.className = 'slide';
-        
-        // Safely create the iframe element
-        const iframe = document.createElement('iframe');
-        iframe.setAttribute('width', '100%');
-        iframe.setAttribute('height', '100%');
-        iframe.setAttribute('frameborder', '0');
-        iframe.setAttribute('allow', 'autoplay; fullscreen');
-        
-        // Extract the original src from the embed HTML
-        const embedHtml = slide.block.embed_html;
-        const srcMatch = embedHtml.match(/src="([^"]+)"/);
-        
-        if (srcMatch && srcMatch[1]) {
-          let src = srcMatch[1];
-          // Add our parameters
-          src = src.includes('?') ? src + '&' : src + '?';
-          src += 'autoplay=1&background=1&muted=1';
-          iframe.setAttribute('src', src);
-          
-          // Append the iframe to our wrapper
-          newElement.appendChild(iframe);
+        // Check if we have a preloaded video
+        if (this.preloadedVideos.has(slide.block.id)) {
+          newElement = this.preloadedVideos.get(slide.block.id);
+          newElement.style.display = '';  // Make visible
+          this.preloadedVideos.delete(slide.block.id);  // Remove from preloaded map
         } else {
-          console.error('Could not extract video src from embed HTML');
-          // Fallback to a placeholder
-          newElement.textContent = 'Video unavailable';
+          // Create new video element if not preloaded
+          newElement = document.createElement('div');
+          newElement.className = 'slide';
+          
+          const iframe = document.createElement('iframe');
+          iframe.setAttribute('width', '100%');
+          iframe.setAttribute('height', '100%');
+          iframe.setAttribute('frameborder', '0');
+          iframe.setAttribute('allow', 'autoplay; fullscreen');
+          
+          const embedHtml = slide.block.embed_html;
+          const srcMatch = embedHtml.match(/src="([^"]+)"/);
+          
+          if (srcMatch && srcMatch[1]) {
+            let src = srcMatch[1];
+            src = src.includes('?') ? src + '&' : src + '?';
+            src += 'autoplay=1&background=1&muted=1';
+            iframe.setAttribute('src', src);
+          }
+          
+          newElement.appendChild(iframe);
         }
       } else if (type === 'Attachment') {
         // Create a wrapper div for the video
