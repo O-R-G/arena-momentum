@@ -114,25 +114,39 @@ class ArenaAPI {
     foreach ($channels as $index => $channel) {
       echo "\nProcessing channel " . ($index + 1) . " of " . count($channels) . ": " . $channel['title'] . "\n";
       $blocks = $this->getChannelBlocks($channel['id']);
-      $image_blocks = array_filter($blocks['contents'], function($block) {
-        return $block['class'] === 'Image';
+      $media_blocks = array_filter($blocks['contents'], function($block) {
+        return $block['class'] === 'Image' || 
+               ($block['class'] === 'Media' && $block['source']['url'] && strpos($block['source']['url'], 'vimeo.com') !== false) ||
+               ($block['class'] === 'Attachment' && isset($block['attachment']['content_type']) && strpos($block['attachment']['content_type'], 'video/') === 0);
       });
       
-      echo "Found " . count($image_blocks) . " image blocks in this channel\n";
+      echo "Found " . count($media_blocks) . " media blocks in this channel\n";
       
-      foreach ($image_blocks as $block) {
-        $all_blocks[] = [
+      foreach ($media_blocks as $block) {
+        $block_data = [
           'id' => $block['id'],
-          'image_url' => $block['image']['original']['url'],
           'title' => $block['title'],
           'channel_title' => $channel['title'],
           'channel_id' => $channel['id'],
-          'channel_slug' => $channel['slug']
+          'channel_slug' => $channel['slug'],
+          'type' => $block['class']
         ];
+
+        if ($block['class'] === 'Image') {
+          $block_data['image_url'] = $block['image']['original']['url'];
+        } else if ($block['class'] === 'Media') {
+          $block_data['embed_html'] = $block['embed']['html'];
+          $block_data['source_url'] = $block['source']['url'];
+        } else if ($block['class'] === 'Attachment') {
+          $block_data['video_url'] = $block['attachment']['url'];
+          $block_data['content_type'] = $block['attachment']['content_type'];
+        }
+
+        $all_blocks[] = $block_data;
       }
     }
     
-    echo "\nTotal image blocks found across all channels: " . count($all_blocks) . "\n";
+    echo "\nTotal media blocks found across all channels: " . count($all_blocks) . "\n";
     return $all_blocks;
   }
 }

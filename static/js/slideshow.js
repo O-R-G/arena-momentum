@@ -142,9 +142,9 @@ class Slideshow {
   async showSlide(index) {
     const schedule = this.schedule.schedule;
     const slide = schedule[index];
-    const url = slide.block.image_url;
+    const type = slide.block.type;
     
-    console.log('Showing slide:', index, 'URL:', url);
+    console.log('Showing slide:', index, 'Type:', type);
     
     // Create container if it doesn't exist
     if (!this.container) {
@@ -173,48 +173,123 @@ class Slideshow {
       document.body.insertBefore(this.container, document.body.firstChild);
     }
 
-    // Create new image element
-    const newImage = new Image();
-    newImage.className = 'slide';
+    // Create new slide element based on type
+    let newElement;
     
     try {
-      // Load the image first
-      await new Promise((resolve, reject) => {
-        newImage.onload = resolve;
-        newImage.onerror = reject;
-        newImage.src = url;
-      });
+      if (type === 'Image') {
+        newElement = new Image();
+        newElement.className = 'slide';
+        
+        // Load the image first
+        await new Promise((resolve, reject) => {
+          newElement.onload = resolve;
+          newElement.onerror = reject;
+          newElement.src = slide.block.image_url;
+        });
+      } else if (type === 'Media') {
+        // Create a wrapper div for the video
+        newElement = document.createElement('div');
+        newElement.className = 'slide';
+        
+        // Safely create the iframe element
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('width', '100%');
+        iframe.setAttribute('height', '100%');
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allow', 'autoplay; fullscreen');
+        
+        // Extract the original src from the embed HTML
+        const embedHtml = slide.block.embed_html;
+        const srcMatch = embedHtml.match(/src="([^"]+)"/);
+        
+        if (srcMatch && srcMatch[1]) {
+          let src = srcMatch[1];
+          // Add our parameters
+          src = src.includes('?') ? src + '&' : src + '?';
+          src += 'autoplay=1&background=1&muted=1';
+          iframe.setAttribute('src', src);
+          
+          // Append the iframe to our wrapper
+          newElement.appendChild(iframe);
+        } else {
+          console.error('Could not extract video src from embed HTML');
+          // Fallback to a placeholder
+          newElement.textContent = 'Video unavailable';
+        }
+      } else if (type === 'Attachment') {
+        // Create a wrapper div for the video
+        newElement = document.createElement('div');
+        newElement.className = 'slide';
+        
+        // Create video element
+        const video = document.createElement('video');
+        video.setAttribute('width', '100%');
+        video.setAttribute('height', '100%');
+        video.setAttribute('playsinline', '');
+        video.setAttribute('muted', '');
+        video.setAttribute('autoplay', '');
+        video.style.objectFit = 'cover';
+        
+        // Set the source
+        const source = document.createElement('source');
+        source.src = slide.block.video_url;
+        source.type = slide.block.content_type;
+        video.appendChild(source);
+        
+        // Add event listeners for video
+        video.addEventListener('loadedmetadata', () => {
+          video.play().catch(e => console.error('Error autoplaying video:', e));
+        });
+        
+        // Error handling
+        video.addEventListener('error', (e) => {
+          console.error('Error loading video:', e);
+          newElement.textContent = 'Video unavailable';
+        });
+        
+        // Append the video to our wrapper
+        newElement.appendChild(video);
+      }
       
-      // Add new image to container
-      this.container.appendChild(newImage);
+      console.log('Created new element:', newElement);
+      
+      if (!newElement) {
+        throw new Error('Failed to create element');
+      }
+      
+      // Add new element to container
+      this.container.appendChild(newElement);
       
       // Force a reflow
-      newImage.offsetHeight;
+      newElement.offsetHeight;
       
-      // Make new image active
+      // Make new element active
       requestAnimationFrame(() => {
-        // If there's a current image, mark it as previous
+        // If there's a current element, mark it as previous
         if (this.currentImage) {
           this.currentImage.classList.remove('active');
           this.currentImage.classList.add('previous');
           
-          // Remove old previous slides
-          Array.from(this.container.querySelectorAll('.previous')).forEach(slide => {
-            if (slide !== this.currentImage) {
-              this.container.removeChild(slide);
-            }
-          });
+          // Remove old previous slides after a delay to ensure smooth transition
+          setTimeout(() => {
+            Array.from(this.container.querySelectorAll('.previous')).forEach(slide => {
+              if (slide !== this.currentImage) {
+                slide.remove();
+              }
+            });
+          }, 1000); // Match this with your CSS transition duration
         }
         
-        // Activate new image
-        newImage.classList.add('active');
-        this.currentImage = newImage;
+        // Activate new element
+        newElement.classList.add('active');
+        this.currentImage = newElement;
       });
       
       console.log('Now showing:', slide.block.title, 'from', slide.block.channel_title);
       
       // Update schedule grid to reflect current slide
-      // this.updateScheduleGrid();
+      this.updateScheduleGrid();
       
       // Scroll current slide into view if grid is visible
       const grid = document.getElementById('schedule-grid');
@@ -223,7 +298,8 @@ class Slideshow {
         currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     } catch (error) {
-      console.error('Error loading image:', error);
+      console.error('Error in showSlide:', error);
+      console.log('Problematic slide:', slide);
     }
   }
 
@@ -270,14 +346,12 @@ class Slideshow {
     return now + this.serverTimeOffset;
   }
 
-  /*
+
   createScheduleGrid() {
     // Just populate the schedule
     this.updateScheduleGrid();
   }
-  */
-
-  /*  
+  
   updateScheduleGrid() {
     const grid = document.getElementById('schedule-grid');
     const schedule = this.schedule.schedule;
@@ -286,10 +360,11 @@ class Slideshow {
       const isCurrent = index === this.currentIndex;
       const isPast = index < this.currentIndex;
       const className = `item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}`;
+      const mediaType = slide.block.type === 'Media' ? '📹' : '🖼️';
       
       return `
         <div class="${className}">
-          <div class="title">${slide.block.title || 'Untitled'}</div>
+          <div class="title">${mediaType} ${slide.block.title || 'Untitled'}</div>
           <div class="channel">${slide.block.channel_title}</div>
         </div>
       `;
@@ -310,7 +385,6 @@ class Slideshow {
       });
     }
   }
-  */
 
   // Adjust slideshow playhead 
   async shuttle(direction) {

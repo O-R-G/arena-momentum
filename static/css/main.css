@@ -44,6 +44,17 @@ p {
   background: black;
 }
 
+#slideshow .slide iframe {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#slideshow .slide iframe {
+  border: none;
+  background: black;
+}
+
 #slideshow .slide.active {
   opacity: 1;
   z-index: 1;
@@ -93,11 +104,10 @@ p {
 
 #schedule-grid {
   position: fixed;
-  top: 0;
-  left: 380px;  /* Increased to give more space */
+  top: 280px;
+  left: 0;  /* Increased to give more space */
   right: 0;
   bottom: 0;
-  background: #333;
   z-index: 1;
   padding: 40px;
   overflow: auto;
@@ -105,8 +115,7 @@ p {
   pointer-events: none;
   columns: 300px auto;
   column-gap: 40px;
-  width: calc(100vw - 380px);  /* Explicitly set width to prevent overlap */
-  display: none;    /* or just get rid of, using this for now */
+  display: none;
 }
 
 #schedule-grid .item {
