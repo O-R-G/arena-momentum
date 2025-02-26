@@ -144,3 +144,10 @@ p {
 }
 
 /* End remove these sections */
+
+#channel-info {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+}
+

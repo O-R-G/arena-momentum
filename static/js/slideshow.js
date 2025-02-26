@@ -324,6 +324,9 @@ class Slideshow {
         this.currentImage = newElement;
       });
       
+      // Update channel and image info
+      const channel_info = document.getElementById('channel-info');
+      channel_info.textContent = slide.block.channel_title + ' : ' + slide.block.title;
       console.log('Now showing:', slide.block.title, 'from', slide.block.channel_title);
       
       // Update schedule grid to reflect current slide

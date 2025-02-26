@@ -68,7 +68,7 @@ function draw_text() {
     if (elapsed < decay_duration) {
       const t = elapsed / decay_duration; // Normalized time (0 to 1)
       speed = speed * (1 - t) + speed_base * t; // Linear interpolation
-      console.log('** start decay t --> ' + t + ' speed --> ' + speed + ' **');
+      // console.log('** start decay t --> ' + t + ' speed --> ' + speed + ' **');
     } else {            
       speed = speed_base; // Ensure it reaches the base speed
       decay = null;
