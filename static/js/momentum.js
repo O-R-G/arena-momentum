@@ -23,6 +23,7 @@ var isFlipping = false;
 var isFlipped = false;  // Track if we're currently flipped
 var totalRotation = Math.PI / 2;  // Track total rotation
 var isPaused = false;  // New variable to track pause state
+var originalIndex = null;  // Track the starting index before arrow keys
 
 ctx.font = radius * 0.9 + 'px hershey';
 ctx.textAlign = 'center';
@@ -110,26 +111,29 @@ canvas.addEventListener('click', function() {
 
 // Keep existing keyboard controls
 document.addEventListener('keydown', function(event) {
-  if (event.key === 'ArrowLeft') {
-    speed -= 0.025;
-    slideshow.shuttle(-1);
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {    
+    // Store original index if this is the first arrow press
+    if (originalIndex === null) {
+      originalIndex = slideshow.currentIndex;
+    }
+    
+    if (event.key === 'ArrowLeft') {
+      speed -= 0.025;
+      slideshow.shuttle(-1);
+    } else {
+      speed += 0.025;
+      slideshow.shuttle(1);
+    }
+    
     decay = null;
     clearTimeout(decay_timeout);        
     decay_timeout = setTimeout(() => {
       decay = performance.now(); 
       speed *= -1;
-      slideshow.determineCurrentSlide();
-    }, 2000);
-  }
-  if (event.key === 'ArrowRight') {
-    speed += 0.025;
-    slideshow.shuttle(1);
-    decay = null;
-    clearTimeout(decay_timeout);        
-    decay_timeout = setTimeout(() => {
-      decay = performance.now(); 
-      speed *= -1;
-      slideshow.determineCurrentSlide();
+      // Return to original index instead of determining current slide
+      slideshow.currentIndex = originalIndex;
+      slideshow.showSlide(originalIndex);
+      originalIndex = null;  // Reset the original index
     }, 2000);
   }
 });
