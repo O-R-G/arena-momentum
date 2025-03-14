@@ -151,3 +151,16 @@ p {
     left: 20px;
 }
 
+#copyleft-download {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    display: inline-block;
+}
+
+#copyleft-download img {
+    height: 30px;
+    padding-right: 10px;
+    vertical-align: middle;
+}
+
