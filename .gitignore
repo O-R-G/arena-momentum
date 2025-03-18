@@ -8,3 +8,4 @@ api/cache/*
 api/data/*
 !api/data/.gitkeep
 .DS_Store
+arena-momentum.pem
