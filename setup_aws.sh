@@ -1,23 +1,39 @@
 #!/bin/bash
 
+# Check if required arguments are provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <ec2-public-ip>"
+    echo "Example: $0 ec2-1-2-3-4.compute-1.amazonaws.com"
+    exit 1
+fi
+
+EC2_IP=$1
+KEY_PATH="arena-momentum.pem"
+
+# Make sure the key file exists
+if [ ! -f "$KEY_PATH" ]; then
+    echo "Error: Key file $KEY_PATH not found!"
+    exit 1
+fi
+
+# Set correct permissions for the key file
+chmod 400 "$KEY_PATH"
+
 # Update system
-sudo yum update -y
+ssh -i "$KEY_PATH" ec2-user@$EC2_IP "sudo yum update -y"
 
 # Install required packages
-sudo yum install -y php php-cli python3 git
+ssh -i "$KEY_PATH" ec2-user@$EC2_IP "sudo yum install -y php php-cli python3 git"
 
 # Create app directory
-mkdir -p ~/arena-momentum
-cd ~/arena-momentum
-
-# Clone your repository (replace with your actual repository URL)
-git clone https://github.com/O-R-G/arena-momentum.git .
+ssh -i "$KEY_PATH" ec2-user@$EC2_IP "mkdir -p ~/arena-momentum"
+scp -i "$KEY_PATH" -r ./* ec2-user@$EC2_IP:~/arena-momentum/
 
 # Make start script executable
-chmod +x start.sh
+ssh -i "$KEY_PATH" ec2-user@$EC2_IP "chmod +x ~/arena-momentum/start.sh"
 
 # Create a systemd service file
-sudo tee /etc/systemd/system/arena-momentum.service << EOF
+ssh -i "$KEY_PATH" ec2-user@$EC2_IP "sudo tee /etc/systemd/system/arena-momentum.service << EOF
 [Unit]
 Description=Arena Momentum Slideshow
 After=network.target
@@ -31,10 +47,9 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-EOF
+EOF"
 
 # Enable and start the service
-sudo systemctl enable arena-momentum
-sudo systemctl start arena-momentum
+ssh -i "$KEY_PATH" ec2-user@$EC2_IP "sudo systemctl enable arena-momentum && sudo systemctl start arena-momentum"
 
-echo "Setup complete! The slideshow should now be running on http://YOUR_EC2_PUBLIC_IP:8000" 
+echo "Setup complete! The slideshow should now be running on http://$EC2_IP:8000" 
