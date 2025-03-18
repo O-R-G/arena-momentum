@@ -50,10 +50,33 @@ class Slideshow {
       const response = await fetch('/api/data/schedule.json');
       this.schedule = await response.json();
       
-      // Create schedule grid
-      // this.createScheduleGrid();
+      // Create container first
+      if (!this.container) {
+        console.log('Creating container');
+        this.container = document.createElement('div');
+        this.container.id = 'slideshow';
+        this.container.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: 0;
+          background: black;
+          overflow: hidden;
+          cursor: pointer;
+        `;
+        
+        // Add click handler to container
+        this.container.addEventListener('click', () => {
+          const currentSlide = this.schedule.schedule[this.currentIndex];
+          const blockUrl = `https://www.are.na/block/${currentSlide.block.id}`;
+          window.open(blockUrl, '_blank');
+        });
+        
+        document.body.insertBefore(this.container, document.body.firstChild);
+      }
 
-      // Start the slideshow
       this.determineCurrentSlide();
       this.preloadUpcoming();
       this.startTimer();
@@ -165,8 +188,9 @@ class Slideshow {
       
       if (srcMatch && srcMatch[1]) {
         let src = srcMatch[1];
+        // Add Vimeo-specific parameters for autoplay
         src = src.includes('?') ? src + '&' : src + '?';
-        src += 'autoplay=1&background=1&muted=1';
+        src += 'autoplay=1&background=1&muted=1&loop=1&byline=0&title=0&controls=0';
         iframe.setAttribute('src', src);
       }
       
@@ -185,33 +209,6 @@ class Slideshow {
     
     console.log('Showing slide:', index, 'Type:', type);
     
-    // Create container if it doesn't exist
-    if (!this.container) {
-      console.log('Creating container');
-      this.container = document.createElement('div');
-      this.container.id = 'slideshow';
-      this.container.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: 0;
-        background: black;
-        overflow: hidden;
-        cursor: pointer;
-      `;
-      
-      // Add click handler to container
-      this.container.addEventListener('click', () => {
-        const currentSlide = this.schedule.schedule[this.currentIndex];
-        const blockUrl = `https://www.are.na/block/${currentSlide.block.id}`;
-        window.open(blockUrl, '_blank');
-      });
-      
-      document.body.insertBefore(this.container, document.body.firstChild);
-    }
-
     // Create or get slide element based on type
     let newElement;
     
@@ -237,23 +234,77 @@ class Slideshow {
           newElement = document.createElement('div');
           newElement.className = 'slide';
           
-          const iframe = document.createElement('iframe');
-          iframe.setAttribute('width', '100%');
-          iframe.setAttribute('height', '100%');
-          iframe.setAttribute('frameborder', '0');
-          iframe.setAttribute('allow', 'autoplay; fullscreen');
-          
-          const embedHtml = slide.block.embed_html;
-          const srcMatch = embedHtml.match(/src="([^"]+)"/);
-          
-          if (srcMatch && srcMatch[1]) {
-            let src = srcMatch[1];
-            src = src.includes('?') ? src + '&' : src + '?';
-            src += 'autoplay=1&background=1&muted=1';
-            iframe.setAttribute('src', src);
+          // Check if we have a local file
+          if (slide.local_file) {
+            console.log('Using local file:', slide.local_file);
+            const video = document.createElement('video');
+            video.setAttribute('width', '100%');
+            video.setAttribute('height', '100%');
+            video.setAttribute('playsinline', '');
+            video.setAttribute('muted', '');
+            video.setAttribute('autoplay', '');
+            video.setAttribute('loop', '');
+            video.setAttribute('webkit-playsinline', '');
+            video.setAttribute('x5-playsinline', '');
+            video.style.objectFit = 'cover';
+            
+            // Set the source
+            const source = document.createElement('source');
+            source.src = slide.local_file;
+            source.type = 'video/mp4';
+            video.appendChild(source);
+            
+            // Add event listeners for video
+            video.addEventListener('loadedmetadata', () => {
+              console.log('Video metadata loaded, attempting to play');
+              video.play().then(() => {
+                console.log('Video started playing successfully');
+              }).catch(e => {
+                console.error('Error autoplaying video:', e);
+                // Try playing again after a short delay
+                setTimeout(() => {
+                  video.play().catch(e => console.error('Error on second play attempt:', e));
+                }, 100);
+              });
+            });
+            
+            video.addEventListener('canplay', () => {
+              console.log('Video can play');
+            });
+            
+            video.addEventListener('playing', () => {
+              console.log('Video is playing');
+            });
+            
+            // Error handling
+            video.addEventListener('error', (e) => {
+              console.error('Error loading video:', e);
+              console.error('Video error code:', video.error.code);
+              console.error('Video error message:', video.error.message);
+              newElement.textContent = 'Video unavailable';
+            });
+            
+            newElement.appendChild(video);
+          } else {
+            const iframe = document.createElement('iframe');
+            iframe.setAttribute('width', '100%');
+            iframe.setAttribute('height', '100%');
+            iframe.setAttribute('frameborder', '0');
+            iframe.setAttribute('allow', 'autoplay; fullscreen');
+            
+            const embedHtml = slide.block.embed_html;
+            const srcMatch = embedHtml.match(/src="([^"]+)"/);
+            
+            if (srcMatch && srcMatch[1]) {
+              let src = srcMatch[1];
+              // Add Vimeo-specific parameters for autoplay
+              src = src.includes('?') ? src + '&' : src + '?';
+              src += 'autoplay=1&background=1&muted=1&loop=1&byline=0&title=0&controls=0';
+              iframe.setAttribute('src', src);
+            }
+            
+            newElement.appendChild(iframe);
           }
-          
-          newElement.appendChild(iframe);
         }
       } else if (type === 'Attachment') {
         // Create a wrapper div for the video
@@ -432,6 +483,7 @@ class Slideshow {
     slideshow.currentIndex += direction;
     slideshow.showSlide(slideshow.currentIndex);
   }
+
 }
 
 // Initialize when page loads

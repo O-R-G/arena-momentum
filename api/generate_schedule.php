@@ -84,10 +84,48 @@ class ScheduleGenerator {
     
     foreach ($blocks as $index => $block) {
       $timestamp = $start_of_day + ($index * $duration);
+      
+      // Check if we have a local file for this block
+      $local_file = null;
+      if ($block['type'] === 'Media' && isset($block['source_url'])) {
+        // Extract video ID from Vimeo URL
+        if (preg_match('/vimeo\.com\/(\d+)/', $block['source_url'], $matches)) {
+          // Normalize the block title to match cache filename format
+          $normalized_title = strtolower($block['title']);
+          $normalized_title = preg_replace('/[^a-z0-9_\-]/', '_', $normalized_title);
+          $normalized_title = preg_replace('/_+/', '_', $normalized_title); // Replace multiple underscores with single
+          $normalized_title = trim($normalized_title, '_'); // Remove leading/trailing underscores
+          
+          // Check for both with and without (720p) suffix
+          $cache_dir = __DIR__ . "/cache";
+          $possible_files = [
+            "{$cache_dir}/{$normalized_title}.mp4",
+            "{$cache_dir}/{$normalized_title} (720p).mp4"
+          ];
+          
+          // Debug output
+          error_log("Checking for local file for block: {$block['title']}");
+          error_log("Normalized title: {$normalized_title}");
+          
+          foreach ($possible_files as $file) {
+            if (file_exists($file)) {
+              $local_file = str_replace(__DIR__, '', $file);
+              // Ensure the path starts with /api
+              if (strpos($local_file, '/api') !== 0) {
+                $local_file = '/api' . $local_file;
+              }
+              error_log("Found local file: {$local_file}");
+              break;
+            }
+          }
+        }
+      }
+      
       $schedule[] = [
         'timestamp' => $timestamp,
         'time' => date('H:i:s', $timestamp),
-        'block' => $block
+        'block' => $block,
+        'local_file' => $local_file
       ];
     }
     
