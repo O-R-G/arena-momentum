@@ -6,4 +6,5 @@ api/data/schedule.json
 api/cache/*
 !api/cache/.gitkeep
 api/data/*
-!api/data/.gitkeep 
+!api/data/.gitkeep
+.DS_Store
