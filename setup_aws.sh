@@ -27,7 +27,18 @@ ssh -i "$KEY_PATH" ec2-user@$EC2_IP "sudo yum install -y php php-cli python3 git
 
 # Create app directory
 ssh -i "$KEY_PATH" ec2-user@$EC2_IP "mkdir -p ~/arena-momentum"
-scp -i "$KEY_PATH" -r ./* ec2-user@$EC2_IP:~/arena-momentum/
+
+# Use rsync to sync files, only uploading newer files
+echo "Syncing files to EC2..."
+rsync -avz --progress \
+    --exclude '.git' \
+    --exclude 'node_modules' \
+    --exclude '*.pem' \
+    --exclude 'setup_aws.sh' \
+    --exclude 'upload_cache.sh' \
+    -e "ssh -i $KEY_PATH" \
+    ./ \
+    ec2-user@$EC2_IP:~/arena-momentum/
 
 # Make start script executable
 ssh -i "$KEY_PATH" ec2-user@$EC2_IP "chmod +x ~/arena-momentum/start.sh"
@@ -50,6 +61,6 @@ WantedBy=multi-user.target
 EOF"
 
 # Enable and start the service
-ssh -i "$KEY_PATH" ec2-user@$EC2_IP "sudo systemctl enable arena-momentum && sudo systemctl start arena-momentum"
+ssh -i "$KEY_PATH" ec2-user@$EC2_IP "sudo systemctl enable arena-momentum && sudo systemctl restart arena-momentum"
 
 echo "Setup complete! The slideshow should now be running on http://$EC2_IP:8000" 
