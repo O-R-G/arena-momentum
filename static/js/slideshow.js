@@ -15,30 +15,20 @@ class Slideshow {
     this.lastSync = 0;
     this.hasLoggedTimes = false;
     this.slideshow = null;
+    this.isPaused = false;
   }
 
   async syncTime() {
     try {
-      // Make multiple time requests to get more accurate offset
-      const offsets = [];
-      for (let i = 0; i < 3; i++) {
-        const beforeRequest = Date.now() / 1000;
-        const response = await fetch('/api/time.php');
-        const afterRequest = Date.now() / 1000;
-        const serverTime = await response.json();
-        
-        // Calculate offset accounting for request latency
-        const latency = (afterRequest - beforeRequest) / 2;
-        const offset = serverTime - (afterRequest - latency);
-        offsets.push(offset);
-      }
+      const beforeRequest = Date.now() / 1000;
+      const response = await fetch('/api/time.php');
+      const afterRequest = Date.now() / 1000;
+      const serverTime = await response.json();
       
-      // Use the median offset to avoid outliers
-      offsets.sort((a, b) => a - b);
-      this.serverTimeOffset = offsets[1];
+      // Calculate offset accounting for request latency
+      const latency = (afterRequest - beforeRequest) / 2;
+      this.serverTimeOffset = serverTime - (afterRequest - latency);
       this.lastSync = Date.now() / 1000;
-      
-      console.log('Time synced, offset:', this.serverTimeOffset);
     } catch (error) {
       console.error('Failed to sync time:', error);
     }
@@ -318,6 +308,7 @@ class Slideshow {
         video.setAttribute('playsinline', '');
         video.setAttribute('muted', '');
         video.setAttribute('autoplay', '');
+        video.setAttribute('loop', '');
         video.style.objectFit = 'cover';
         
         // Set the source
@@ -399,6 +390,13 @@ class Slideshow {
     let lastIndex = this.currentIndex;
     
     const tick = () => {
+      // Skip timer updates if paused
+      if (this.isPaused) {
+        console.log('Timer paused, skipping update');
+        requestAnimationFrame(tick);
+        return;
+      }
+
       const now = this.getCurrentTime();
       const schedule = this.schedule.schedule;
       const startTime = schedule[0].timestamp;
@@ -409,16 +407,11 @@ class Slideshow {
       const elapsedTime = (now - startTime) % totalDuration;
       const slideIndex = Math.floor(elapsedTime / duration);
       
-      // Add detailed logging
       if (slideIndex !== lastIndex) {
-        console.log('Slide change debug:', {
-          currentTime: new Date(now * 1000).toLocaleTimeString(),
-          startTime: new Date(startTime * 1000).toLocaleTimeString(),
-          elapsedSeconds: Math.floor(elapsedTime),
-          duration,
+        console.log('Timer updating slide:', {
           oldIndex: lastIndex,
           newIndex: slideIndex,
-          serverOffset: this.serverTimeOffset
+          isPaused: this.isPaused
         });
         
         lastIndex = slideIndex;
@@ -431,6 +424,13 @@ class Slideshow {
     };
 
     requestAnimationFrame(tick);
+  }
+
+  // Add method to reset timer state
+  resetTimer() {
+    this.isPaused = false;
+    // Force a re-evaluation of the current slide
+    this.determineCurrentSlide();
   }
 
   getCurrentTime() {
