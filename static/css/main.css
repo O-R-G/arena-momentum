@@ -78,15 +78,7 @@ a.no-underline {
   z-index: 0;
 }
 
-/* Remove these sections */
-#info-overlay,
-#schedule-overlay,
-#schedule-hover-area {
-  display: none;  /* Or just delete these sections entirely */
-}
-/* End remove these sections */
-
-#schedule-info {
+#overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -102,37 +94,29 @@ a.no-underline {
   opacity: 0;
   pointer-events: none;
   z-index: 1;
-  columns: 300px 6;
-  column-gap: 44px;
   padding: 2em;
   transition: opacity 0.75s ease; 
 }
 
-
-/* Remove these sections */
-
-#schedule-info h1 {
-  font-size: 18px;
-  margin-bottom: 20px;
+#overlay div {
+  columns: 300px 6;
+  column-gap: 44px;
 }
 
-#schedule-grid {
-  position: fixed;
-  top: 280px;
-  left: 0;  /* Increased to give more space */
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  padding: 40px;
-  overflow: auto;
+#about {
+}
+
+#credits {
   opacity: 0;
-  pointer-events: none;
-  columns: 300px auto;
-  column-gap: 40px;
   display: none;
 }
 
-#schedule-grid .item {
+#schedule {
+  opacity: 0;
+  display: none;
+}
+
+#schedule .item {
   color: white;
   font-family: hershey, sans-serif;
   font-size: 14px;
@@ -142,22 +126,20 @@ a.no-underline {
   break-inside: avoid; /* Prevent items from splitting across columns */
 }
 
-#schedule-grid .item.current {
+#schedule .item.current {
   color: #fff;
   background: rgba(255,255,255,0.1);
   padding: 4px;
 }
 
-#schedule-grid .item.past {
+#schedule .item.past {
   opacity: 0.4;
 }
 
-#schedule-grid .channel {
+#schedule .channel {
   font-size: 12px;
   opacity: 0.7;
 }
-
-/* End remove these sections */
 
 #channel-info {
     position: fixed;
@@ -178,3 +160,12 @@ a.no-underline {
     vertical-align: middle;
 }
 
+/* mobile */
+
+@media screen and (max-width: 500px) {
+
+    #overlay {
+      position: relative;
+      padding-bottom: 200px;
+    }
+}

@@ -140,17 +140,23 @@ document.addEventListener('keydown', function(event) {
 
 function onFlip(isFlipped) {
   // Tell the slideshow about the flip
-  const grid = document.getElementById('schedule-grid');
-  const info = document.getElementById('schedule-info');
-  if (grid && info) {
-    grid.style.opacity = isFlipped ? '0.9' : '0';
-    grid.style.pointerEvents = isFlipped ? 'auto' : 'none';
-    info.style.opacity = isFlipped ? '0.9' : '0';
-    info.style.pointerEvents = isFlipped ? 'auto' : 'none';
-    
-    // Scroll to current item when showing grid
+  const overlay = document.getElementById('overlay');
+  // const about = document.getElementById('about');
+  // const schedule = document.getElementById('schedule');
+  // if (about && schedule) {
+  if (overlay) {
+    overlay.style.opacity = isFlipped ? '0.9' : '0';
+    overlay.style.pointerEvents = isFlipped ? 'auto' : 'none';
+    /*
+    about.style.opacity = isFlipped ? '0.9' : '0';
+    about.style.pointerEvents = isFlipped ? 'auto' : 'none';
+    schedule.style.opacity = isFlipped ? '0.9' : '0';
+    schedule.style.pointerEvents = isFlipped ? 'auto' : 'none';
+    */
+    /*
+    // Scroll to current item when showing schedule
     if (isFlipped) {
-      const currentItem = grid.querySelector('.item.current');
+      const currentItem = schedule.querySelector('.item.current');
       if (currentItem) {
         requestAnimationFrame(() => {
           currentItem.scrollIntoView({ 
@@ -161,6 +167,7 @@ function onFlip(isFlipped) {
         });
       }
     }
+    */
   }
 }
 
