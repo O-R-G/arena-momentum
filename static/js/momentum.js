@@ -138,21 +138,22 @@ document.addEventListener('keydown', function(event) {
   }
 });
 
+function overlay_show(id) {
+    document.getElementById('about').style.display = 'none';
+    document.getElementById(id).style.display = 'block';
+}
+
+function overlay_hide(id) {
+    document.getElementById('about').style.display = 'block';
+    document.getElementById(id).style.display = 'none';
+}
+
 function onFlip(isFlipped) {
   // Tell the slideshow about the flip
   const overlay = document.getElementById('overlay');
-  // const about = document.getElementById('about');
-  // const schedule = document.getElementById('schedule');
-  // if (about && schedule) {
   if (overlay) {
     overlay.style.opacity = isFlipped ? '0.9' : '0';
     overlay.style.pointerEvents = isFlipped ? 'auto' : 'none';
-    /*
-    about.style.opacity = isFlipped ? '0.9' : '0';
-    about.style.pointerEvents = isFlipped ? 'auto' : 'none';
-    schedule.style.opacity = isFlipped ? '0.9' : '0';
-    schedule.style.pointerEvents = isFlipped ? 'auto' : 'none';
-    */
     /*
     // Scroll to current item when showing schedule
     if (isFlipped) {
