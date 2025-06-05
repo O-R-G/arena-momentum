@@ -151,11 +151,21 @@ function overlay_hide(id) {
 function onFlip(isFlipped) {
   // Tell the slideshow about the flip
   const overlay = document.getElementById('overlay');
-  if (overlay) {
+  const about = document.getElementById('about');
+  const schedule = document.getElementById('schedule');
+  const colophon = document.getElementById('colophon');
+  if (overlay) {  
     overlay.style.opacity = isFlipped ? '0.9' : '0';
     overlay.style.pointerEvents = isFlipped ? 'auto' : 'none';
+    // Close any open 'popup' and reset
+    if (isFlipped) {
+        schedule.style.display = 'none';
+        colophon.style.display = 'none';
+        about.style.display = 'block';
+    }
     /*
     // Scroll to current item when showing schedule
+    // Not 100% sure this is desirable, let's see
     if (isFlipped) {
       const currentItem = schedule.querySelector('.item.current');
       if (currentItem) {
@@ -169,6 +179,7 @@ function onFlip(isFlipped) {
       }
     }
     */
+
   }
 }
 

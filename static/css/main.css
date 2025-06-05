@@ -106,7 +106,7 @@ a.no-underline {
 #about {
 }
 
-#credits {
+#colophon {
   display: none;
 }
 
@@ -158,12 +158,38 @@ a.no-underline {
     vertical-align: middle;
 }
 
+#download-link {
+}
+
+.popup::after {
+    padding-right: 10px;
+    content: "";
+    display: inline-block;
+    height: 14px;
+    width: 14px;
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    background-image: url('/static//media/svg/arrow-up-right-1-w.svg');
+}
+
+.x {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 30px;
+    height: 30px;
+}
+
 /* mobile */
 
 @media screen and (max-width: 500px) {
 
     #overlay {
       position: relative;
-      padding-bottom: 200px;
+      padding-bottom: 300px;
+    }
+
+    #download-link {
+        display: none;
     }
 }
