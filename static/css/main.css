@@ -180,6 +180,14 @@ a.no-underline {
     height: 30px;
 }
 
+.no-break {
+    break-inside: avoid;
+    page-break-inside: avoid; 
+    display: block;           
+    margin-bottom: 1em;
+    /* padding: 1em; */
+}
+
 /* mobile */
 
 @media screen and (max-width: 500px) {
@@ -187,6 +195,8 @@ a.no-underline {
     #overlay {
       position: relative;
       padding-bottom: 300px;
+      height: initial;
+      min-height: 100vh;
     }
 
     #download-link {
