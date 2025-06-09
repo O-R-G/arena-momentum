@@ -101,6 +101,7 @@ a.no-underline {
 #overlay div {
   columns: 300px 6;
   column-gap: 44px;
+  column-fill: balance;
 }
 
 #about {

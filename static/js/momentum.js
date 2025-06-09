@@ -147,6 +147,7 @@ function overlay_show(id) {
 function overlay_hide(id) {
     document.getElementById('about').style.display = 'block';
     document.getElementById(id).style.display = 'none';
+    window.scrollTo(0, 0);
 }
 
 function onFlip(isFlipped) {
@@ -180,7 +181,7 @@ function onFlip(isFlipped) {
       }
     }
     */
-
+    window.scrollTo(0, 0);
   }
 }
 
