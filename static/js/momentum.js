@@ -141,6 +141,7 @@ document.addEventListener('keydown', function(event) {
 function overlay_show(id) {
     document.getElementById('about').style.display = 'none';
     document.getElementById(id).style.display = 'block';
+    window.scrollTo(0, 0);
 }
 
 function overlay_hide(id) {
@@ -182,7 +183,4 @@ function onFlip(isFlipped) {
 
   }
 }
-
-
-
 
