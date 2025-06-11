@@ -106,6 +106,33 @@ class ArenaAPI {
     return ['contents' => $all_contents];
   }
   
+  private function extractVimeoIframeUrl($embedlyUrl) {
+    // Parse the URL and get the src parameter
+    $parsedUrl = parse_url($embedlyUrl);
+    if (!isset($parsedUrl['query'])) {
+      return null;
+    }
+    
+    parse_str($parsedUrl['query'], $queryParams);
+    if (!isset($queryParams['src'])) {
+      return null;
+    }
+    
+    // Decode the src parameter which contains the Vimeo URL
+    $vimeoUrl = urldecode($queryParams['src']);
+    
+    // Extract the video ID and hash from the Vimeo URL
+    if (preg_match('/player\.vimeo\.com\/video\/(\d+)\?h=([^&]+)/', $vimeoUrl, $matches)) {
+      $videoId = $matches[1];
+      $hash = $matches[2];
+      
+      // Construct the direct Vimeo iframe URL with autoplay and other parameters
+      return "https://player.vimeo.com/video/{$videoId}?h={$hash}&autoplay=1&background=1&muted=1&loop=1&byline=0&title=0&controls=0";
+    }
+    
+    return null;
+  }
+
   public function getAllBlocks() {
     $response = $this->getUserChannels();
     $channels = $response['channels'];
@@ -135,7 +162,17 @@ class ArenaAPI {
         if ($block['class'] === 'Image') {
           $block_data['image_url'] = $block['image']['original']['url'];
         } else if ($block['class'] === 'Media') {
-          $block_data['embed_html'] = $block['embed']['html'];
+          // Extract direct Vimeo iframe URL if it's a Vimeo video
+          if (strpos($block['source']['url'], 'vimeo.com') !== false) {
+            $vimeoUrl = $this->extractVimeoIframeUrl($block['embed']['html']);
+            if ($vimeoUrl) {
+              $block_data['vimeo_url'] = $vimeoUrl;
+            } else {
+              $block_data['embed_html'] = $block['embed']['html'];
+            }
+          } else {
+            $block_data['embed_html'] = $block['embed']['html'];
+          }
           $block_data['source_url'] = $block['source']['url'];
         } else if ($block['class'] === 'Attachment') {
           $block_data['video_url'] = $block['attachment']['url'];
