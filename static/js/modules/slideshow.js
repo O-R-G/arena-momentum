@@ -10,11 +10,22 @@ export class Slideshow {
     this.currentImage = null;
     this.time = new Time();
     this.isPaused = false;
+    this.lastSlideChange = 0;
+    this.isInitialized = false;
+    this.debugMode = true; // Enable debug mode
   }
 
   async init() {
     try {
-      await this.time.syncTime();
+      // Show loading state
+      this.showLoadingState();
+      
+      // Wait for stable time sync
+      await this.time.waitForStableSync();
+      console.log('Time sync state:', this.time.getSyncState());
+      
+      this.time.startPeriodicSync();
+      
       const response = await fetch('/api/data/schedule.json');
       this.schedule = await response.json();
       
@@ -46,15 +57,67 @@ export class Slideshow {
         document.body.insertBefore(this.container, document.body.firstChild);
       }
 
+      // Remove loading state
+      this.hideLoadingState();
+      
       this.determineCurrentSlide();
       this.preloadUpcoming();
       this.startTimer();
-      
-      // Resync time periodically
-      setInterval(() => this.time.syncTime(), 60000);
+      this.isInitialized = true;
     } catch (error) {
-      console.error('Failed to load schedule:', error);
+      console.error('Failed to initialize slideshow:', error);
+      this.showErrorState(error);
     }
+  }
+
+  showLoadingState() {
+    const loading = DOM.createElement('div', {
+      id: 'loading',
+      style: {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        color: 'white',
+        fontSize: '24px',
+        zIndex: 1000
+      }
+    }, ['Synchronizing time...']);
+    
+    document.body.appendChild(loading);
+  }
+
+  hideLoadingState() {
+    const loading = document.getElementById('loading');
+    if (loading) {
+      loading.remove();
+    }
+  }
+
+  showErrorState(error) {
+    const errorDiv = DOM.createElement('div', {
+      id: 'error',
+      style: {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        color: 'red',
+        fontSize: '24px',
+        zIndex: 1000,
+        textAlign: 'center'
+      }
+    }, [
+      'Failed to initialize slideshow',
+      DOM.createElement('div', {
+        style: {
+          fontSize: '16px',
+          marginTop: '10px'
+        }
+      }, [error.message])
+    ]);
+    
+    document.body.appendChild(errorDiv);
   }
 
   determineCurrentSlide() {
@@ -371,11 +434,11 @@ export class Slideshow {
 
   startTimer() {
     let lastIndex = this.currentIndex;
+    let lastDebugTime = 0;
+    let lastSyncTime = 0;
     
     const tick = () => {
-      // Skip timer updates if paused
-      if (this.isPaused) {
-        console.log('Timer paused, skipping update');
+      if (!this.isInitialized || this.isPaused) {
         requestAnimationFrame(tick);
         return;
       }
@@ -390,15 +453,43 @@ export class Slideshow {
       const elapsedTime = (now - startTime) % totalDuration;
       const slideIndex = Math.floor(elapsedTime / duration);
       
+      // Debug logging every 5 seconds
+      if (this.debugMode && now - lastDebugTime > 5) {
+        console.log('Timer debug:', {
+          currentTime: now,
+          serverOffset: this.time.serverTimeOffset,
+          elapsedTime,
+          currentSlide: slideIndex,
+          timeSyncState: this.time.getSyncState(),
+          timeSinceLastSync: now - lastSyncTime
+        });
+        lastDebugTime = now;
+      }
+      
+      // Force resync if time difference is too large
+      if (Math.abs(this.time.getTimeDifference()) > 1000) {
+        console.log('Time difference too large, forcing resync');
+        this.time.syncTime().then(() => {
+          lastSyncTime = now;
+        });
+      }
+      
       if (slideIndex !== lastIndex) {
+        const timeSinceLastChange = now - this.lastSlideChange;
         console.log('Timer updating slide:', {
           oldIndex: lastIndex,
           newIndex: slideIndex,
-          isPaused: this.isPaused
+          isPaused: this.isPaused,
+          timeSinceLastChange,
+          currentTime: now,
+          elapsedTime,
+          timeOffset: this.time.serverTimeOffset,
+          timeSyncState: this.time.getSyncState()
         });
         
         lastIndex = slideIndex;
         this.currentIndex = slideIndex;
+        this.lastSlideChange = now;
         this.showSlide(this.currentIndex);
         this.preloadUpcoming();
       }
@@ -423,8 +514,12 @@ export class Slideshow {
   
   updateScheduleGrid() {
     const grid = document.getElementById('schedule-grid');
+    if (!grid) {
+      console.log('Schedule grid not found, skipping update');
+      return;
+    }
+
     const schedule = this.schedule.schedule;
-    
     grid.innerHTML = schedule.map((slide, index) => {
       const isCurrent = index === this.currentIndex;
       const isPast = index < this.currentIndex;
@@ -438,14 +533,11 @@ export class Slideshow {
         </div>
       `;
     }).join('');
-    
-    // Scroll to current item horizontally
-    const currentItem = grid.querySelector('.item.current');
-    if (currentItem && grid.style.opacity === '1') {
-      DOM.scrollIntoView(currentItem, {
-        behavior: 'smooth',
-        block: 'center'
-      });
+
+    // Scroll to current item
+    const currentItem = grid.querySelector('.current');
+    if (currentItem) {
+      DOM.scrollIntoView(currentItem, { behavior: 'smooth', block: 'center' });
     }
   }
 
