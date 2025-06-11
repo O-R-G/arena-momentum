@@ -1,61 +1,40 @@
-/*
-    SLIDESHOW
-    
-    Handles synchronized image display based on daily schedule
-*/
+import { Time } from '../utils/time.js';
+import { DOM } from '../utils/dom.js';
 
-class Slideshow {
+export class Slideshow {
   constructor() {
     this.schedule = null;
     this.currentIndex = 0;
     this.preloadedImages = new Map();
     this.preloadedVideos = new Map();
     this.currentImage = null;
-    this.serverTimeOffset = 0;
-    this.lastSync = 0;
-    this.hasLoggedTimes = false;
-    this.slideshow = null;
+    this.time = new Time();
     this.isPaused = false;
-  }
-
-  async syncTime() {
-    try {
-      const beforeRequest = Date.now() / 1000;
-      const response = await fetch('/api/time.php');
-      const afterRequest = Date.now() / 1000;
-      const serverTime = await response.json();
-      
-      // Calculate offset accounting for request latency
-      const latency = (afterRequest - beforeRequest) / 2;
-      this.serverTimeOffset = serverTime - (afterRequest - latency);
-      this.lastSync = Date.now() / 1000;
-    } catch (error) {
-      console.error('Failed to sync time:', error);
-    }
   }
 
   async init() {
     try {
-      await this.syncTime();
+      await this.time.syncTime();
       const response = await fetch('/api/data/schedule.json');
       this.schedule = await response.json();
       
       // Create container first
       if (!this.container) {
         console.log('Creating container');
-        this.container = document.createElement('div');
-        this.container.id = 'slideshow';
-        this.container.style.cssText = `
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          z-index: 0;
-          background: black;
-          overflow: hidden;
-          cursor: pointer;
-        `;
+        this.container = DOM.createElement('div', {
+          id: 'slideshow',
+          style: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 0,
+            background: 'black',
+            overflow: 'hidden',
+            cursor: 'pointer'
+          }
+        });
         
         // Add click handler to container
         this.container.addEventListener('click', () => {
@@ -72,14 +51,14 @@ class Slideshow {
       this.startTimer();
       
       // Resync time periodically
-      setInterval(() => this.syncTime(), 60000); // Every minute
+      setInterval(() => this.time.syncTime(), 60000);
     } catch (error) {
       console.error('Failed to load schedule:', error);
     }
   }
 
   determineCurrentSlide() {
-    const now = this.getCurrentTime();
+    const now = this.time.getCurrentTime();
     const schedule = this.schedule.schedule;
     console.log('Current time:', now);
     console.log('First slide time:', schedule[0].timestamp);
@@ -161,16 +140,17 @@ class Slideshow {
 
   async preloadVideo(slide) {
     if (!this.preloadedVideos.has(slide.block.id)) {
-      // Create wrapper and iframe
-      const wrapper = document.createElement('div');
-      wrapper.className = 'slide preloading';
-      wrapper.style.display = 'none';  // Hide while preloading
+      const wrapper = DOM.createElement('div', {
+        className: 'slide preloading',
+        style: { display: 'none' }
+      });
       
-      const iframe = document.createElement('iframe');
-      iframe.setAttribute('width', '100%');
-      iframe.setAttribute('height', '100%');
-      iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('allow', 'autoplay; fullscreen');
+      const iframe = DOM.createElement('iframe', {
+        width: '100%',
+        height: '100%',
+        frameborder: '0',
+        allow: 'autoplay; fullscreen'
+      });
       
       // Extract the original src
       const embedHtml = slide.block.embed_html;
@@ -221,27 +201,28 @@ class Slideshow {
           this.preloadedVideos.delete(slide.block.id);  // Remove from preloaded map
         } else {
           // Create new video element if not preloaded
-          newElement = document.createElement('div');
-          newElement.className = 'slide';
+          newElement = DOM.createElement('div', { className: 'slide' });
           
           // Check if we have a local file
           if (slide.local_file) {
             console.log('Using local file:', slide.local_file);
-            const video = document.createElement('video');
-            video.setAttribute('width', '100%');
-            video.setAttribute('height', '100%');
-            video.setAttribute('playsinline', '');
-            video.setAttribute('muted', '');
-            video.setAttribute('autoplay', '');
-            video.setAttribute('loop', '');
-            video.setAttribute('webkit-playsinline', '');
-            video.setAttribute('x5-playsinline', '');
-            video.style.objectFit = 'cover';
+            const video = DOM.createElement('video', {
+              width: '100%',
+              height: '100%',
+              playsinline: '',
+              muted: '',
+              autoplay: '',
+              loop: '',
+              'webkit-playsinline': '',
+              'x5-playsinline': '',
+              style: { objectFit: 'cover' }
+            });
             
             // Set the source
-            const source = document.createElement('source');
-            source.src = slide.local_file;
-            source.type = 'video/mp4';
+            const source = DOM.createElement('source', {
+              src: slide.local_file,
+              type: 'video/mp4'
+            });
             video.appendChild(source);
             
             // Add event listeners for video
@@ -276,11 +257,12 @@ class Slideshow {
             
             newElement.appendChild(video);
           } else {
-            const iframe = document.createElement('iframe');
-            iframe.setAttribute('width', '100%');
-            iframe.setAttribute('height', '100%');
-            iframe.setAttribute('frameborder', '0');
-            iframe.setAttribute('allow', 'autoplay; fullscreen');
+            const iframe = DOM.createElement('iframe', {
+              width: '100%',
+              height: '100%',
+              frameborder: '0',
+              allow: 'autoplay; fullscreen'
+            });
             
             const embedHtml = slide.block.embed_html;
             const srcMatch = embedHtml.match(/src="([^"]+)"/);
@@ -298,23 +280,24 @@ class Slideshow {
         }
       } else if (type === 'Attachment') {
         // Create a wrapper div for the video
-        newElement = document.createElement('div');
-        newElement.className = 'slide';
+        newElement = DOM.createElement('div', { className: 'slide' });
         
         // Create video element
-        const video = document.createElement('video');
-        video.setAttribute('width', '100%');
-        video.setAttribute('height', '100%');
-        video.setAttribute('playsinline', '');
-        video.setAttribute('muted', '');
-        video.setAttribute('autoplay', '');
-        video.setAttribute('loop', '');
-        video.style.objectFit = 'cover';
+        const video = DOM.createElement('video', {
+          width: '100%',
+          height: '100%',
+          playsinline: '',
+          muted: '',
+          autoplay: '',
+          loop: '',
+          style: { objectFit: 'cover' }
+        });
         
         // Set the source
-        const source = document.createElement('source');
-        source.src = slide.block.video_url;
-        source.type = slide.block.content_type;
+        const source = DOM.createElement('source', {
+          src: slide.block.video_url,
+          type: slide.block.content_type
+        });
         video.appendChild(source);
         
         // Add event listeners for video
@@ -378,7 +361,7 @@ class Slideshow {
       const grid = document.getElementById('schedule-grid');
       const currentItem = grid.querySelector('.item.current');
       if (currentItem && grid.style.opacity === '1') {
-        currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        DOM.scrollIntoView(currentItem);
       }
     } catch (error) {
       console.error('Error in showSlide:', error);
@@ -397,7 +380,7 @@ class Slideshow {
         return;
       }
 
-      const now = this.getCurrentTime();
+      const now = this.time.getCurrentTime();
       const schedule = this.schedule.schedule;
       const startTime = schedule[0].timestamp;
       const duration = this.schedule.metadata.slide_duration;
@@ -433,12 +416,6 @@ class Slideshow {
     this.determineCurrentSlide();
   }
 
-  getCurrentTime() {
-    const now = Date.now() / 1000;
-    return now + this.serverTimeOffset;
-  }
-
-
   createScheduleGrid() {
     // Just populate the schedule
     this.updateScheduleGrid();
@@ -465,29 +442,16 @@ class Slideshow {
     // Scroll to current item horizontally
     const currentItem = grid.querySelector('.item.current');
     if (currentItem && grid.style.opacity === '1') {
-      // Calculate which column the current item is in
-      const itemBounds = currentItem.getBoundingClientRect();
-      const gridBounds = grid.getBoundingClientRect();
-      const columnWidth = 300 + 40; // column width + gap
-      const targetColumn = Math.floor(itemBounds.left / columnWidth);
-      
-      grid.scrollTo({
-        left: targetColumn * columnWidth,
-        behavior: 'smooth'
+      DOM.scrollIntoView(currentItem, {
+        behavior: 'smooth',
+        block: 'center'
       });
     }
   }
 
   // Adjust slideshow playhead 
   async shuttle(direction) {
-    slideshow.currentIndex += direction;
-    slideshow.showSlide(slideshow.currentIndex);
+    this.currentIndex += direction;
+    this.showSlide(this.currentIndex);
   }
-
-}
-
-// Initialize when page loads
-window.addEventListener('load', () => {
-  slideshow = new Slideshow();
-  slideshow.init();
-}); 
+} 
