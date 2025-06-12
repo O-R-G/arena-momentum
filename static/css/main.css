@@ -38,7 +38,7 @@ a.no-underline {
 }
 
 #slideshow {
-    /* border: 1px solid red; */
+
 }
 
 #slideshow img {
@@ -53,20 +53,19 @@ a.no-underline {
   height: 100%;
   opacity: 0;
   transition: opacity 1s ease-in-out;
-  object-fit: cover;
   z-index: 0;
   background: black;
-}
-
-#slideshow .slide iframe {
-  width: 100%;
-  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   object-fit: cover;
 }
 
 #slideshow .slide iframe {
+  width: 100vw;
+  height: 100vh;
   border: none;
-  background: black;
+  object-fit: cover;
 }
 
 #slideshow .slide.active {

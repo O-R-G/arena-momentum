@@ -322,34 +322,21 @@ export class Slideshow {
             newElement.appendChild(video);
           } else {
             const iframe = DOM.createElement('iframe', {
-              width: '100%',
-              height: '100%',
+              width: '100vw',
+              height: '100vh',
               frameborder: '0',
-              allow: 'autoplay; fullscreen'
+              allow: 'autoplay; fullscreen',
+              allowfullscreen: ''
             });
             
-            const embedHtml = slide.block.embed_html;
-            if (embedHtml) {
-              const srcMatch = embedHtml.match(/src="([^"]+)"/);
-              
-              if (srcMatch && srcMatch[1]) {
-                let src = srcMatch[1];
-                // Add Vimeo-specific parameters for autoplay
-                src = src.includes('?') ? src + '&' : src + '?';
-                src += 'autoplay=1&background=1&muted=1&loop=1&byline=0&title=0&controls=0';
-                iframe.setAttribute('src', src);
-              }
-            } else if (slide.block.source_url) {
-              // Handle Vimeo URLs
-              const vimeoMatch = slide.block.source_url.match(/vimeo\.com\/(\d+)/);
-              if (vimeoMatch) {
-                const videoId = vimeoMatch[1];
-                const src = `https://player.vimeo.com/video/${videoId}?autoplay=1&background=1&muted=1&loop=1&byline=0&title=0&controls=0`;
-                iframe.setAttribute('src', src);
-              } else {
-                // Handle other video URLs
-                iframe.setAttribute('src', slide.block.source_url);
-              }
+            const vimeoUrl = slide.block.vimeo_url;
+            console.log('Using Vimeo URL:', vimeoUrl);
+            
+            if (vimeoUrl) {
+              // Add Vimeo-specific parameters for autoplay
+              const params = 'background=1&autoplay=1&muted=1&controls=0&loop=1';
+              const src = vimeoUrl.includes('?') ? `${vimeoUrl}&${params}` : `${vimeoUrl}?${params}`;
+              iframe.setAttribute('src', src);
             }
             
             newElement.appendChild(iframe);
