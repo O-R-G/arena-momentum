@@ -4,6 +4,15 @@ import { Time } from './utils/time.js';
 import { Slideshow } from './modules/slideshow.js';
 import { DOM } from './utils/dom.js';
 
+// Global functions for HTML onclick handlers
+window.overlay_show = function(id) {
+  window.app.overlay.show(id);
+}
+
+window.overlay_hide = function(id) {
+  window.app.overlay.hide(id);
+}
+
 class App {
   constructor() {
     this.overlay = new Overlay();
@@ -34,5 +43,5 @@ class App {
   }
 }
 
-// Start the application
-new App(); 
+// Create global app instance
+window.app = new App(); 
