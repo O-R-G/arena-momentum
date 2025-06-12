@@ -98,7 +98,7 @@ a.no-underline {
   transition: opacity 0.75s ease; 
 }
 
-#overlay div {
+#about {
   columns: 300px 6;
   column-gap: 44px;
   column-fill: balance;
@@ -113,6 +113,16 @@ a.no-underline {
 
 #schedule {
   display: none;
+  opacity: 1 !important;
+}
+
+#schedule-grid {
+  columns: 300px 6;
+  column-gap: 44px;
+  column-fill: balance;
+  margin-top: 20px;
+  opacity: 1;
+  color: white;
 }
 
 #schedule .item {
@@ -123,6 +133,13 @@ a.no-underline {
   padding: 4px 0;
   margin-bottom: 4px;
   break-inside: avoid; /* Prevent items from splitting across columns */
+  opacity: 1;
+}
+
+#schedule .item .title {
+  margin-bottom: 2px;
+  color: white;
+  opacity: 1;
 }
 
 #schedule .item.current {
@@ -135,9 +152,10 @@ a.no-underline {
   opacity: 0.4;
 }
 
-#schedule .channel {
+#schedule .item .channel {
   font-size: 12px;
   opacity: 0.7;
+  color: white;
 }
 
 #channel-info {
@@ -179,6 +197,10 @@ a.no-underline {
     right: 20px;
     width: 30px;
     height: 30px;
+}
+
+.no-underline a{
+  border-bottom: none;
 }
 
 .no-break {

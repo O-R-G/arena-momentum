@@ -71,7 +71,6 @@ export class Time {
         if (offsetDiff > this.syncWindow * 2) {
           this.syncAttempts++;
           if (this.syncAttempts < this.maxSyncAttempts) {
-            console.log(`Retrying sync (attempt ${this.syncAttempts + 1}/${this.maxSyncAttempts})`);
             await new Promise(resolve => setTimeout(resolve, 200));
             return this._doSync();
           }

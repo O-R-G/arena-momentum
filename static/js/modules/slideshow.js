@@ -208,30 +208,31 @@ export class Slideshow {
         style: { display: 'none' }
       });
       
-      const iframe = DOM.createElement('iframe', {
-        width: '100%',
-        height: '100%',
-        frameborder: '0',
-        allow: 'autoplay; fullscreen'
-      });
-      
-      // Extract the original src
-      const embedHtml = slide.block.embed_html;
-      const srcMatch = embedHtml.match(/src="([^"]+)"/);
-      
-      if (srcMatch && srcMatch[1]) {
-        let src = srcMatch[1];
-        // Add Vimeo-specific parameters for autoplay
-        src = src.includes('?') ? src + '&' : src + '?';
-        src += 'autoplay=1&background=1&muted=1&loop=1&byline=0&title=0&controls=0';
-        iframe.setAttribute('src', src);
+      // Only handle local video files
+      if (slide.local_file) {
+        const video = DOM.createElement('video', {
+          width: '100%',
+          height: '100%',
+          playsinline: '',
+          muted: '',
+          autoplay: '',
+          loop: '',
+          'webkit-playsinline': '',
+          'x5-playsinline': '',
+          style: { objectFit: 'cover' }
+        });
+        
+        const source = DOM.createElement('source', {
+          src: slide.local_file,
+          type: 'video/mp4'
+        });
+        video.appendChild(source);
+        wrapper.appendChild(video);
+        this.preloadedVideos.set(slide.block.id, wrapper);
+        
+        // Add to DOM but keep hidden
+        this.container.appendChild(wrapper);
       }
-      
-      wrapper.appendChild(iframe);
-      this.preloadedVideos.set(slide.block.id, wrapper);
-      
-      // Add to DOM but keep hidden
-      this.container.appendChild(wrapper);
     }
   }
 
@@ -328,14 +329,27 @@ export class Slideshow {
             });
             
             const embedHtml = slide.block.embed_html;
-            const srcMatch = embedHtml.match(/src="([^"]+)"/);
-            
-            if (srcMatch && srcMatch[1]) {
-              let src = srcMatch[1];
-              // Add Vimeo-specific parameters for autoplay
-              src = src.includes('?') ? src + '&' : src + '?';
-              src += 'autoplay=1&background=1&muted=1&loop=1&byline=0&title=0&controls=0';
-              iframe.setAttribute('src', src);
+            if (embedHtml) {
+              const srcMatch = embedHtml.match(/src="([^"]+)"/);
+              
+              if (srcMatch && srcMatch[1]) {
+                let src = srcMatch[1];
+                // Add Vimeo-specific parameters for autoplay
+                src = src.includes('?') ? src + '&' : src + '?';
+                src += 'autoplay=1&background=1&muted=1&loop=1&byline=0&title=0&controls=0';
+                iframe.setAttribute('src', src);
+              }
+            } else if (slide.block.source_url) {
+              // Handle Vimeo URLs
+              const vimeoMatch = slide.block.source_url.match(/vimeo\.com\/(\d+)/);
+              if (vimeoMatch) {
+                const videoId = vimeoMatch[1];
+                const src = `https://player.vimeo.com/video/${videoId}?autoplay=1&background=1&muted=1&loop=1&byline=0&title=0&controls=0`;
+                iframe.setAttribute('src', src);
+              } else {
+                // Handle other video URLs
+                iframe.setAttribute('src', slide.block.source_url);
+              }
             }
             
             newElement.appendChild(iframe);
@@ -453,40 +467,14 @@ export class Slideshow {
       const elapsedTime = (now - startTime) % totalDuration;
       const slideIndex = Math.floor(elapsedTime / duration);
       
-      // Debug logging every 5 seconds
-      if (this.debugMode && now - lastDebugTime > 5) {
-        console.log('Timer debug:', {
-          currentTime: now,
-          serverOffset: this.time.serverTimeOffset,
-          elapsedTime,
-          currentSlide: slideIndex,
-          timeSyncState: this.time.getSyncState(),
-          timeSinceLastSync: now - lastSyncTime
-        });
-        lastDebugTime = now;
-      }
-      
       // Force resync if time difference is too large
       if (Math.abs(this.time.getTimeDifference()) > 1000) {
-        console.log('Time difference too large, forcing resync');
         this.time.syncTime().then(() => {
           lastSyncTime = now;
         });
       }
       
       if (slideIndex !== lastIndex) {
-        const timeSinceLastChange = now - this.lastSlideChange;
-        console.log('Timer updating slide:', {
-          oldIndex: lastIndex,
-          newIndex: slideIndex,
-          isPaused: this.isPaused,
-          timeSinceLastChange,
-          currentTime: now,
-          elapsedTime,
-          timeOffset: this.time.serverTimeOffset,
-          timeSyncState: this.time.getSyncState()
-        });
-        
         lastIndex = slideIndex;
         this.currentIndex = slideIndex;
         this.lastSlideChange = now;
@@ -507,11 +495,6 @@ export class Slideshow {
     this.determineCurrentSlide();
   }
 
-  createScheduleGrid() {
-    // Just populate the schedule
-    this.updateScheduleGrid();
-  }
-  
   updateScheduleGrid() {
     const grid = document.getElementById('schedule-grid');
     if (!grid) {
@@ -520,25 +503,45 @@ export class Slideshow {
     }
 
     const schedule = this.schedule.schedule;
-    grid.innerHTML = schedule.map((slide, index) => {
+    if (!schedule) {
+      console.log('No schedule data available');
+      return;
+    }
+
+    // Update classes for all items
+    const items = grid.querySelectorAll('.item');
+    items.forEach((item, index) => {
       const isCurrent = index === this.currentIndex;
       const isPast = index < this.currentIndex;
-      const className = `item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}`;
-      const mediaType = slide.block.type === 'Media' ? '📹' : '🖼️';
       
-      return `
-        <div class="${className}">
-          <div class="title">${mediaType} ${slide.block.title || 'Untitled'}</div>
-          <div class="channel">${slide.block.channel_title}</div>
-        </div>
-      `;
-    }).join('');
+      item.classList.toggle('current', isCurrent);
+      item.classList.toggle('past', isPast);
+    });
 
     // Scroll to current item
     const currentItem = grid.querySelector('.current');
     if (currentItem) {
       DOM.scrollIntoView(currentItem, { behavior: 'smooth', block: 'center' });
     }
+  }
+
+  createScheduleGrid() {
+    console.log('Creating schedule grid');
+    const grid = document.getElementById('schedule-grid');
+    if (!grid || !this.schedule) return;
+
+    const schedule = this.schedule.schedule;
+    grid.innerHTML = schedule.map((slide, index) => {
+      return `
+        <div class="item">
+          <div class="title">${slide.block.title || 'Untitled'}</div>
+          <div class="channel">${slide.block.channel_title || 'Untitled Channel'}</div>
+        </div>
+      `;
+    }).join('');
+
+    // Initial class update
+    this.updateScheduleGrid();
   }
 
   // Adjust slideshow playhead 
