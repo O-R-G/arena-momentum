@@ -5,7 +5,7 @@
 - download files link to dia form
 - add poster.pdf to download files
 - dia form css?
-- examine radio synchronicity when two (or more) browser windows open
-- add schedule (to #overlay)
-- fix css columns to avoid blank lines at top of column (requires fixed contained height for safari)
+/ examine radio synchronicity when two (or more) browser windows open
++ add schedule (to #overlay)
+x fix css columns to avoid blank lines at top of column (requires fixed contained height for safari)
 - add swipe gesture on mobile to match arrows function
