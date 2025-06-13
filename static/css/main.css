@@ -103,11 +103,11 @@ a.no-underline {
   column-fill: balance;
 }
 
-#about {
-}
-
 #colophon {
   display: none;
+  columns: 300px 6;
+  column-gap: 44px;
+  column-fill: balance;
 }
 
 #schedule {
