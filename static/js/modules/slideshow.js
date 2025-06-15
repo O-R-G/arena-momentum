@@ -60,7 +60,18 @@ export class Slideshow {
       // Remove loading state
       this.hideLoadingState();
       
-      this.determineCurrentSlide();
+      // Wait a bit to ensure time sync is really stable
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Double check time sync is still stable
+      if (!this.time.getSyncState().isStable) {
+        await this.time.waitForStableSync();
+      }
+      
+      // Show first slide and wait for it to complete
+      await this.determineCurrentSlide();
+      
+      // Only start preloading and timer after first slide is shown
       this.preloadUpcoming();
       this.startTimer();
       this.isInitialized = true;
@@ -169,10 +180,10 @@ export class Slideshow {
     }
     
     // Force immediate display of first slide
-    this.showSlide(this.currentIndex).catch(error => {
+    return this.showSlide(this.currentIndex).catch(error => {
       console.error('Failed to show initial slide:', error);
       // Try showing first slide as fallback
-      this.showSlide(0);
+      return this.showSlide(0);
     });
   }
 
@@ -186,18 +197,24 @@ export class Slideshow {
       const slide = schedule[nextIndex];
       
       if (slide.block.type === 'Image') {
-        this.preloadImage(slide.block.image_url);
+        await this.preloadImage(slide.block.image_url);
       } else if (slide.block.type === 'Media') {
-        this.preloadVideo(slide);
+        await this.preloadVideo(slide);
       }
     }
   }
 
   async preloadImage(url) {
     if (!this.preloadedImages.has(url)) {
-      const img = new Image();
-      img.src = url;
-      this.preloadedImages.set(url, img);
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          this.preloadedImages.set(url, img);
+          resolve();
+        };
+        img.onerror = reject;
+        img.src = url;
+      });
     }
   }
 
@@ -228,6 +245,13 @@ export class Slideshow {
         });
         video.appendChild(source);
         wrapper.appendChild(video);
+        
+        // Wait for video to be ready
+        await new Promise((resolve, reject) => {
+          video.addEventListener('loadedmetadata', resolve);
+          video.addEventListener('error', reject);
+        });
+        
         this.preloadedVideos.set(slide.block.id, wrapper);
         
         // Add to DOM but keep hidden
@@ -247,6 +271,13 @@ export class Slideshow {
     let newElement;
     
     try {
+      // Remove any existing slides that aren't the current one
+      Array.from(this.container.querySelectorAll('.slide')).forEach(slide => {
+        if (slide !== this.currentImage) {
+          slide.remove();
+        }
+      });
+
       if (type === 'Image') {
         newElement = new Image();
         newElement.className = 'slide';
@@ -290,33 +321,22 @@ export class Slideshow {
             video.appendChild(source);
             
             // Add event listeners for video
-            video.addEventListener('loadedmetadata', () => {
-              console.log('Video metadata loaded, attempting to play');
-              video.play().then(() => {
-                console.log('Video started playing successfully');
-              }).catch(e => {
-                console.error('Error autoplaying video:', e);
-                // Try playing again after a short delay
-                setTimeout(() => {
-                  video.play().catch(e => console.error('Error on second play attempt:', e));
-                }, 100);
+            await new Promise((resolve, reject) => {
+              video.addEventListener('loadedmetadata', () => {
+                console.log('Video metadata loaded, attempting to play');
+                video.play().then(() => {
+                  console.log('Video started playing successfully');
+                  resolve();
+                }).catch(e => {
+                  console.error('Error autoplaying video:', e);
+                  reject(e);
+                });
               });
-            });
-            
-            video.addEventListener('canplay', () => {
-              console.log('Video can play');
-            });
-            
-            video.addEventListener('playing', () => {
-              console.log('Video is playing');
-            });
-            
-            // Error handling
-            video.addEventListener('error', (e) => {
-              console.error('Error loading video:', e);
-              console.error('Video error code:', video.error.code);
-              console.error('Video error message:', video.error.message);
-              newElement.textContent = 'Video unavailable';
+              
+              video.addEventListener('error', (e) => {
+                console.error('Error loading video:', e);
+                reject(e);
+              });
             });
             
             newElement.appendChild(video);
@@ -342,41 +362,6 @@ export class Slideshow {
             newElement.appendChild(iframe);
           }
         }
-      } else if (type === 'Attachment') {
-        // Create a wrapper div for the video
-        newElement = DOM.createElement('div', { className: 'slide' });
-        
-        // Create video element
-        const video = DOM.createElement('video', {
-          width: '100%',
-          height: '100%',
-          playsinline: '',
-          muted: '',
-          autoplay: '',
-          loop: '',
-          style: { objectFit: 'cover' }
-        });
-        
-        // Set the source
-        const source = DOM.createElement('source', {
-          src: slide.block.video_url,
-          type: slide.block.content_type
-        });
-        video.appendChild(source);
-        
-        // Add event listeners for video
-        video.addEventListener('loadedmetadata', () => {
-          video.play().catch(e => console.error('Error autoplaying video:', e));
-        });
-        
-        // Error handling
-        video.addEventListener('error', (e) => {
-          console.error('Error loading video:', e);
-          newElement.textContent = 'Video unavailable';
-        });
-        
-        // Append the video to our wrapper
-        newElement.appendChild(video);
       }
       
       console.log('Created new element:', newElement);
@@ -400,11 +385,9 @@ export class Slideshow {
           
           // Remove old previous slides after a delay to ensure smooth transition
           setTimeout(() => {
-            Array.from(this.container.querySelectorAll('.previous')).forEach(slide => {
-              if (slide !== this.currentImage) {
-                slide.remove();
-              }
-            });
+            if (this.currentImage && this.currentImage !== newElement) {
+              this.currentImage.remove();
+            }
           }, 1000); // Match this with your CSS transition duration
         }
         
@@ -519,9 +502,11 @@ export class Slideshow {
 
     const schedule = this.schedule.schedule;
     grid.innerHTML = schedule.map((slide, index) => {
+      const title = slide.block.title || 'Untitled';
+      const truncatedTitle = title.length > 50 ? title.substring(0, 47) + '...' : title;
       return `
         <div class="item">
-          <div class="title">${slide.block.title || 'Untitled'}</div>
+          <div class="title">${truncatedTitle}</div>
           <div class="channel">${slide.block.channel_title || 'Untitled Channel'}</div>
         </div>
       `;

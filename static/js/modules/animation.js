@@ -96,6 +96,7 @@ export class Animation {
       this.ctx.rotate(angle);
       this.ctx.translate(0, -this.radius);
       this.ctx.rotate(-Math.PI / 2);
+
       // Change text color based on state (only in debug mode)
       if (this.debug) {
         if (this.decay) {
