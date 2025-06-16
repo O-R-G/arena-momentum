@@ -2,10 +2,10 @@
 x should any videos have sound? im not sure
 - deploy including git repo on pair.com server
 - server setup description recorded, sent to sara
-- download files link to dia form
++ download files link to dia form
 - add poster.pdf to download files
-- dia form css?
-/ examine radio synchronicity when two (or more) browser windows open
++ dia form css?
++ examine radio synchronicity when two (or more) browser windows open
 + add schedule (to #overlay)
 + fix css columns to avoid blank lines at top of column (requires fixed contained height for safari)
-- add swipe gesture on mobile to match arrows function
++ add swipe gesture on mobile to match arrows function
