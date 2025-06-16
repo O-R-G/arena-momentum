@@ -13,6 +13,8 @@ export class Slideshow {
     this.lastSlideChange = 0;
     this.isInitialized = false;
     this.debugMode = true; // Enable debug mode
+    this.touchStartX = 0;
+    this.touchEndX = 0;
   }
 
   async init() {
@@ -53,6 +55,16 @@ export class Slideshow {
           const blockUrl = `https://www.are.na/block/${currentSlide.block.id}`;
           window.open(blockUrl, '_blank');
         });
+
+        // Add touch event handlers
+        this.container.addEventListener('touchstart', (e) => {
+          this.touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        this.container.addEventListener('touchend', (e) => {
+          this.touchEndX = e.changedTouches[0].screenX;
+          this.handleSwipe();
+        }, { passive: true });
         
         document.body.insertBefore(this.container, document.body.firstChild);
       }
@@ -684,7 +696,37 @@ export class Slideshow {
 
   // Adjust slideshow playhead 
   async shuttle(direction) {
-    this.currentIndex += direction;
-    this.showSlide(this.currentIndex);
+    if (direction === 'prev') {
+      this.currentIndex = Math.max(0, this.currentIndex - 1);
+    } else if (direction === 'next') {
+      this.currentIndex = (this.currentIndex + 1) % this.schedule.schedule.length;
+    } else {
+      this.currentIndex += direction;
+    }
+    await this.showSlide(this.currentIndex);
+  }
+
+  handleSwipe() {
+    const swipeThreshold = 50; // Minimum distance for a swipe
+    const swipeDistance = this.touchEndX - this.touchStartX;
+    
+    console.log('Swipe detected:', {
+      startX: this.touchStartX,
+      endX: this.touchEndX,
+      distance: swipeDistance,
+      threshold: swipeThreshold
+    });
+    
+    if (Math.abs(swipeDistance) > swipeThreshold) {
+      if (swipeDistance > 0) {
+        // Swipe right - go to previous slide
+        console.log('Swiping right - going to previous slide');
+        this.shuttle('prev');
+      } else {
+        // Swipe left - go to next slide
+        console.log('Swiping left - going to next slide');
+        this.shuttle('next');
+      }
+    }
   }
 } 
