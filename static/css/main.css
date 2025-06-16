@@ -108,11 +108,20 @@ a.no-underline {
   width: 100%;
 }
 
+#colophon .header {
+  margin-bottom: 10px;
+}
+
 #colophon .content {
   display: flex;
   flex-direction: row;
   gap: 20px;
   width: 100%;
+}
+
+#colophon .content > * {
+  flex: 1;
+  min-width: 0; /* Prevents flex items from overflowing */
 }
 
 #schedule {
