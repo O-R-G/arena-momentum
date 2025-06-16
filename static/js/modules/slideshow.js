@@ -200,6 +200,9 @@ export class Slideshow {
         await this.preloadImage(slide.block.image_url);
       } else if (slide.block.type === 'Media') {
         await this.preloadVideo(slide);
+      } else if (slide.block.type === 'Attachment') {
+        // Preload attachment video
+        await this.preloadAttachmentVideo(slide);
       }
     }
   }
@@ -246,17 +249,105 @@ export class Slideshow {
         video.appendChild(source);
         wrapper.appendChild(video);
         
-        // Wait for video to be ready
+        // Wait for video to be ready and start playing
         await new Promise((resolve, reject) => {
-          video.addEventListener('loadedmetadata', resolve);
-          video.addEventListener('error', reject);
+          video.addEventListener('loadedmetadata', () => {
+            console.log('Preloaded video metadata loaded, attempting to play');
+            video.play().then(() => {
+              console.log('Preloaded video started playing successfully');
+              resolve();
+            }).catch(e => {
+              console.error('Error autoplaying preloaded video:', e);
+              reject(e);
+            });
+          });
+          
+          video.addEventListener('error', (e) => {
+            console.error('Error loading preloaded video:', e);
+            reject(e);
+          });
         });
         
         this.preloadedVideos.set(slide.block.id, wrapper);
         
         // Add to DOM but keep hidden
         this.container.appendChild(wrapper);
+      } else if (slide.block.vimeo_url) {
+        const iframe = DOM.createElement('iframe', {
+          width: '100vw',
+          height: '100vh',
+          frameborder: '0',
+          allow: 'autoplay; fullscreen',
+          allowfullscreen: ''
+        });
+        
+        const vimeoUrl = slide.block.vimeo_url;
+        console.log('Preloading Vimeo URL:', vimeoUrl);
+        
+        // Add Vimeo-specific parameters for autoplay
+        const params = 'background=1&autoplay=1&muted=1&controls=0&loop=1';
+        const src = vimeoUrl.includes('?') ? `${vimeoUrl}&${params}` : `${vimeoUrl}?${params}`;
+        iframe.setAttribute('src', src);
+        
+        wrapper.appendChild(iframe);
+        this.preloadedVideos.set(slide.block.id, wrapper);
+        
+        // Add to DOM but keep hidden
+        this.container.appendChild(wrapper);
+      } else {
+        throw new Error('No media source found for slide');
       }
+    }
+  }
+
+  async preloadAttachmentVideo(slide) {
+    if (slide.block.video_url) {
+      console.log('Using attachment video:', slide.block.video_url);
+      const video = DOM.createElement('video', {
+        width: '100%',
+        height: '100%',
+        playsinline: '',
+        muted: '',
+        autoplay: '',
+        loop: '',
+        'webkit-playsinline': '',
+        'x5-playsinline': '',
+        style: { objectFit: 'cover' }
+      });
+      
+      // Set the source
+      const source = DOM.createElement('source', {
+        src: slide.block.video_url,
+        type: slide.block.content_type || 'video/mp4'
+      });
+      video.appendChild(source);
+      
+      // Add event listeners for video
+      await new Promise((resolve, reject) => {
+        video.addEventListener('loadedmetadata', () => {
+          console.log('Video metadata loaded, attempting to play');
+          video.play().then(() => {
+            console.log('Video started playing successfully');
+            resolve();
+          }).catch(e => {
+            console.error('Error autoplaying video:', e);
+            reject(e);
+          });
+        });
+        
+        video.addEventListener('error', (e) => {
+          console.error('Error loading video:', e);
+          reject(e);
+        });
+      });
+      
+      const wrapper = DOM.createElement('div', { className: 'slide' });
+      wrapper.appendChild(video);
+      
+      // Add to DOM but keep hidden
+      this.container.appendChild(wrapper);
+    } else {
+      throw new Error('No video URL found for attachment');
     }
   }
 
@@ -273,10 +364,9 @@ export class Slideshow {
     try {
       // Remove any existing slides that aren't the current one
       Array.from(this.container.querySelectorAll('.slide')).forEach(slide => {
-        if (slide !== this.currentImage) {
-          slide.remove();
-        }
+        slide.remove();
       });
+      this.currentImage = null;
 
       if (type === 'Image') {
         newElement = new Image();
@@ -340,7 +430,7 @@ export class Slideshow {
             });
             
             newElement.appendChild(video);
-          } else {
+          } else if (slide.block.vimeo_url) {
             const iframe = DOM.createElement('iframe', {
               width: '100vw',
               height: '100vh',
@@ -352,23 +442,73 @@ export class Slideshow {
             const vimeoUrl = slide.block.vimeo_url;
             console.log('Using Vimeo URL:', vimeoUrl);
             
-            if (vimeoUrl) {
-              // Add Vimeo-specific parameters for autoplay
-              const params = 'background=1&autoplay=1&muted=1&controls=0&loop=1';
-              const src = vimeoUrl.includes('?') ? `${vimeoUrl}&${params}` : `${vimeoUrl}?${params}`;
-              iframe.setAttribute('src', src);
-            }
+            // Add Vimeo-specific parameters for autoplay
+            const params = 'background=1&autoplay=1&muted=1&controls=0&loop=1';
+            const src = vimeoUrl.includes('?') ? `${vimeoUrl}&${params}` : `${vimeoUrl}?${params}`;
+            iframe.setAttribute('src', src);
             
             newElement.appendChild(iframe);
+          } else {
+            throw new Error('No media source found for slide');
           }
         }
+      } else if (type === 'Attachment') {
+        // Create new video element for attachment
+        newElement = DOM.createElement('div', { className: 'slide' });
+        
+        if (slide.block.video_url) {
+          console.log('Using attachment video:', slide.block.video_url);
+          const video = DOM.createElement('video', {
+            width: '100%',
+            height: '100%',
+            playsinline: '',
+            muted: '',
+            autoplay: '',
+            loop: '',
+            'webkit-playsinline': '',
+            'x5-playsinline': '',
+            style: { objectFit: 'cover' }
+          });
+          
+          // Set the source
+          const source = DOM.createElement('source', {
+            src: slide.block.video_url,
+            type: slide.block.content_type || 'video/mp4'
+          });
+          video.appendChild(source);
+          
+          // Add event listeners for video
+          await new Promise((resolve, reject) => {
+            video.addEventListener('loadedmetadata', () => {
+              console.log('Video metadata loaded, attempting to play');
+              video.play().then(() => {
+                console.log('Video started playing successfully');
+                resolve();
+              }).catch(e => {
+                console.error('Error autoplaying video:', e);
+                reject(e);
+              });
+            });
+            
+            video.addEventListener('error', (e) => {
+              console.error('Error loading video:', e);
+              reject(e);
+            });
+          });
+          
+          newElement.appendChild(video);
+        } else {
+          throw new Error('No video URL found for attachment');
+        }
+      } else {
+        throw new Error(`Unsupported slide type: ${type}`);
       }
-      
-      console.log('Created new element:', newElement);
       
       if (!newElement) {
         throw new Error('Failed to create element');
       }
+      
+      console.log('Created new element:', newElement);
       
       // Add new element to container
       this.container.appendChild(newElement);
@@ -413,6 +553,32 @@ export class Slideshow {
     } catch (error) {
       console.error('Error in showSlide:', error);
       console.log('Problematic slide:', slide);
+      
+      // If we failed to show the slide, try showing the first slide as fallback
+      if (index !== 0) {
+        console.log('Attempting to show first slide as fallback');
+        return this.showSlide(0);
+      }
+      
+      // If we're already trying to show the first slide and it failed,
+      // create a simple error message element
+      newElement = DOM.createElement('div', {
+        className: 'slide error',
+        style: {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontSize: '24px',
+          textAlign: 'center',
+          padding: '20px'
+        }
+      });
+      newElement.textContent = 'Failed to load slide. Please refresh the page.';
+      
+      this.container.appendChild(newElement);
+      newElement.classList.add('active');
+      this.currentImage = newElement;
     }
   }
 
