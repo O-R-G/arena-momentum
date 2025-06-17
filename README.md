@@ -177,4 +177,126 @@ The schedule is stored in `schedule.json` and contains:
 }
 ```
 
+## Deployment
+
+The project includes scripts for deploying to both staging and production environments on Pair.com.
+
+### Prerequisites
+
+1. SSH Key Setup:
+   - Generate an SSH key if you don't have one:
+     ```bash
+     ssh-keygen -t ed25519 -C "your_email@example.com"
+     ```
+   - Add your public key to Pair.com:
+     - Log in to your Pair.com control panel
+     - Go to SSH Keys section
+     - Add your public key (contents of `~/.ssh/id_ed25519.pub`)
+   - Test your SSH connection:
+     ```bash
+     ssh diaarena@216.146.208.144
+     ```
+
+### Deployment Scripts
+
+The project includes two deployment scripts:
+
+1. Staging Deployment:
+   ```bash
+   # Preview changes without uploading
+   ./scripts/upload-staging.sh --dry-run
+   
+   # Deploy to staging
+   ./scripts/upload-staging.sh
+   ```
+
+2. Production Deployment:
+   ```bash
+   # Preview changes without uploading
+   ./scripts/upload-production.sh --dry-run
+   
+   # Deploy to production
+   ./scripts/upload-production.sh
+   ```
+
+Both scripts will:
+- Check if the target directory exists and is writable
+- Upload all files except:
+  - `.DS_Store`
+  - `.git`
+  - `arena-momentum.pem`
+  - `scripts/`
+  - `setup_aws.sh`
+  - `upload_cache.sh`
+  - `start.sh`
+
+The staging site is available at: https://staging.arena-momentum.org
+The production site is available at: https://arena-momentum.org
+
+## Monitoring
+
+The project uses UptimeRobot for server monitoring. This provides free, reliable monitoring of both staging and production environments.
+
+### Health Check Endpoint
+
+A health check endpoint is available at `/api/health.php`. It verifies:
+- Are.na API connectivity
+- Schedule file existence and validity
+- Returns appropriate HTTP status codes (200 for healthy, 503 for unhealthy)
+
+Example response:
+```json
+{
+    "status": "healthy",
+    "timestamp": 1234567890,
+    "checks": {
+        "arena_api": {
+            "status": "healthy",
+            "message": "Are.na API connection successful"
+        },
+        "schedule": {
+            "status": "healthy",
+            "message": "Schedule file exists and is valid"
+        }
+    }
+}
+```
+
+### Setting Up UptimeRobot
+
+1. Create a free account at [UptimeRobot](https://uptimerobot.com)
+2. Add new monitors for:
+   - Production site: https://arena-momentum.org
+   - Staging site: https://staging.arena-momentum.org
+   - Production health check: https://arena-momentum.org/api/health.php
+   - Staging health check: https://staging.arena-momentum.org/api/health.php
+
+3. Configure each monitor:
+   - Type: HTTP(s)
+   - Check interval: 5 minutes
+   - Alert when down: 1 time
+   - Alert when up: 1 time
+   - For health check endpoints, set "Alert when down" to 1 time and "Alert when up" to 1 time
+
+4. Set up notifications:
+   - Add your email address
+   - Optionally add SMS notifications
+   - Configure alert thresholds
+
+### Monitoring Dashboard
+
+UptimeRobot provides a public status page that you can share with stakeholders. To set it up:
+
+1. Go to Settings → Status Pages
+2. Create a new status page
+3. Add your monitors
+4. Customize the appearance
+5. Share the status page URL
+
+The status page will show:
+- Current status of all monitored endpoints
+- Uptime history
+- Response times
+- Recent incidents
+
 

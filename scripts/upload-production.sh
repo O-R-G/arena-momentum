@@ -3,7 +3,7 @@
 # Configuration
 REMOTE_USER="diaarena"
 REMOTE_HOST="216.146.208.144"
-REMOTE_DIR="~/public_html/staging.arena-momentum.org"
+REMOTE_DIR="~/public_html/arena-momentum.org"
 LOCAL_DIR="."
 
 # Colors for output
@@ -19,7 +19,7 @@ if [ "$1" == "--dry-run" ]; then
     echo -e "${YELLOW}Running in dry-run mode - no files will be modified${NC}"
 fi
 
-echo -e "${GREEN}Starting upload to staging server...${NC}"
+echo -e "${GREEN}Starting upload to production server...${NC}"
 
 # Check if remote directory exists and is writable
 echo "Checking remote directory..."
