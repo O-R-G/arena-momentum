@@ -9,6 +9,7 @@ export class Time {
     this.syncHistory = [];
     this.isStable = false;
     this.syncPromise = null;
+    this.serverToLocalOffset = 0;
   }
 
   async syncTime() {
@@ -22,6 +23,25 @@ export class Time {
     } finally {
       this.syncPromise = null;
     }
+  }
+
+  async serverTime() {
+    const response = await fetch('/api/time.php');
+    if (!response.ok) {
+      throw new Error(`Time sync failed with status ${response.status}`);
+    }
+    const serverTimeSeconds = await response.json();
+    return serverTimeSeconds;
+  }
+
+  async calculateServerToLocalOffset() {
+    const serverTime = await this.serverTime();
+    const localTime = performance.now();
+    const offset = serverTime - localTime;
+
+    console.log('Server to local offset:', offset);
+    this.serverToLocalOffset = offset;
+    return offset;
   }
 
   async _doSync() {
@@ -93,6 +113,14 @@ export class Time {
   getCurrentTime() {
     // Convert back to seconds for comparison with server timestamps
     return (performance.now() + this.serverTimeOffset) / 1000;
+  }
+
+  getLocalTimeAsServerTime() {
+    return (performance.now() + this.serverToLocalOffset) / 1000;
+  }
+
+  convertTimestampToLocalTime(timestamp) {
+    return timestamp - this.serverToLocalOffset;
   }
 
   getTimeDifference() {

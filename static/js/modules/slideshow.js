@@ -24,9 +24,10 @@ export class Slideshow {
       
       // Wait for stable time sync
       await this.time.waitForStableSync();
-      console.log('Time sync state:', this.time.getSyncState());
+      // console.log('Time sync state:', this.time.getSyncState());
       
       this.time.startPeriodicSync();
+      this.time.calculateServerToLocalOffset();
       
       const response = await fetch('/api/data/schedule.json');
       this.schedule = await response.json();
@@ -145,19 +146,26 @@ export class Slideshow {
     const now = this.time.getCurrentTime();
     const schedule = this.schedule.schedule;
     const startTime = schedule[0].timestamp;
-    const dayDuration = schedule[schedule.length - 1].timestamp - schedule[0].timestamp;
-    const timeIntoSchedule = (now - startTime) % dayDuration;
-    const adjustedTime = startTime + timeIntoSchedule;
+    const duration = this.schedule.metadata.slide_duration;
+    const totalDuration = schedule.length * duration;
+    
+    // Calculate the current time position within the schedule cycle
+    const elapsedTime = (now - startTime) % totalDuration;
+    const adjustedTime = startTime + elapsedTime;
     return adjustedTime;
   }
 
-  convertToDisplayTime(timestamp) {
+  getSlideTimestampAdjusted(index) {
     const schedule = this.schedule.schedule;
     const startTime = schedule[0].timestamp;
-    const dayDuration = schedule[schedule.length - 1].timestamp - schedule[0].timestamp;
-    const timeIntoSchedule = (timestamp - startTime) % dayDuration;
-    const displayTime = startTime + timeIntoSchedule;
-    return displayTime;
+    const duration = this.schedule.metadata.slide_duration;
+    // Calculate the timestamp for this slide index using the same logic as startTimer
+    const slideTimestamp = startTime + (index * duration);
+    return slideTimestamp;
+  }
+
+  convertScheduleTimestampToLocalTime(timestamp) {
+    return timestamp - this.time.serverToLocalOffset;
   }
 
   determineCurrentSlide() {
@@ -166,7 +174,7 @@ export class Slideshow {
     
     // If we're past the last slide of the day, adjust current time to be relative to first slide
     if (now > schedule[schedule.length - 1].timestamp) {
-      console.log('Adjusted time:', adjustedTime);
+      // console.log('Adjusted time:', adjustedTime);
       
       // Find the appropriate slide for the adjusted time
       let found = false;
@@ -174,7 +182,7 @@ export class Slideshow {
         if (schedule[i].timestamp > adjustedTime) {
           this.currentIndex = Math.max(0, i - 1);
           found = true;
-          console.log('Selected slide index (adjusted):', this.currentIndex);
+          // console.log('Selected slide index (adjusted):', this.currentIndex);
           break;
         }
       }
@@ -182,7 +190,7 @@ export class Slideshow {
       // If no slide found, show first slide
       if (!found) {
         this.currentIndex = 0;
-        console.log('No slide found, showing first slide');
+        // console.log('No slide found, showing first slide');
       }
     } else {
       // Normal case - find the next slide
@@ -191,7 +199,7 @@ export class Slideshow {
         if (schedule[i].timestamp > now) {
           this.currentIndex = Math.max(0, i - 1);
           found = true;
-          console.log('Selected slide index:', this.currentIndex);
+          // console.log('Selected slide index:', this.currentIndex);
           break;
         }
       }
@@ -199,7 +207,7 @@ export class Slideshow {
       // If no slide found, show first slide
       if (!found) {
         this.currentIndex = 0;
-        console.log('No slide found, showing first slide');
+        // console.log('No slide found, showing first slide');
       }
     }
     
@@ -656,8 +664,8 @@ export class Slideshow {
     const schedule = this.schedule.schedule;
     const slide = schedule[index];
     const channel_info = document.getElementById('channel-info');
-    const timestamp = this.getAdjustedTime();
-    const formattedTimestamp = new Date(timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const timestamp = this.time.getCurrentTime();
+    const formattedTimestamp = new Date(timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     channel_info.textContent = formattedTimestamp + ' : ' + slide.block.title;
   }
 
@@ -700,7 +708,8 @@ export class Slideshow {
     grid.innerHTML = schedule.map((slide, index) => {
       const title = slide.block.title || 'Untitled';
       // Convert unix timestamp to local time
-      const timestamp = new Date(slide.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const adjustedTimestamp = this.convertScheduleTimestampToLocalTime(slide.timestamp);
+      const timestamp = new Date(adjustedTimestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
       const combinedTitle = timestamp + ' : ' + title;
       console.log(combinedTitle);
       return `
