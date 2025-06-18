@@ -239,6 +239,8 @@ The project uses UptimeRobot for server monitoring. This provides free, reliable
 
 ### Health Check Endpoint
 
+We use uptimerobot.com to monitor server health.
+
 A health check endpoint is available at `/api/health.php`. It verifies:
 - Are.na API connectivity
 - Schedule file existence and validity
