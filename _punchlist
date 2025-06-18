@@ -1,16 +1,22 @@
 / replace all vimeo with locally stored mp4
 x should any videos have sound? im not sure
 + deploy including git repo on pair.com server
-+ server setup description recorded, sent to sara
++ server setup description recorded
+- sent to sara
 + download files link to dia form
 + add poster.pdf to download files
-+ dia form css?
+X dia form css?
 + examine radio synchronicity when two (or more) browser windows open
 + add schedule (to #overlay)
 + fix css columns to avoid blank lines at top of column (requires fixed contained height for safari)
 + add swipe gesture on mobile to match arrows function
+- time refactor to have PHP serve current (and surrounding slides)
+- vimeo file download
+- git clone workflow for syncing code
+- check server generation on pair.com
 - #colophon columns
 - are.na make channels public, add 'readme'?
 - are.na how to facilitate uploading user documentation, instructions block?
+  - instructions on whitelisting: Ongoing Documenation uploads, Ongoing documentation
 - server monitoring / observability?
 
