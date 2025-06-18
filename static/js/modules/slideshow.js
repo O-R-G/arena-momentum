@@ -102,7 +102,6 @@ export class Slideshow {
         left: '50%',
         transform: 'translate(-50%, -50%)',
         color: 'white',
-        fontSize: '24px',
         zIndex: 1000
       }
     }, ['Synchronizing time...']);
