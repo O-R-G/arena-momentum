@@ -708,13 +708,18 @@ export class Slideshow {
     const startTime = schedule[0].timestamp;
     const duration = this.schedule.metadata.slide_duration;
     const totalDuration = schedule.length * duration;
+    const currentTime = this.time.getCurrentTime();
+    
+    // Calculate the current time position within the schedule cycle
+    const elapsedTime = (currentTime - startTime) % totalDuration;
+    const currentCycleStart = currentTime - elapsedTime;
     
     grid.innerHTML = schedule.map((slide, index) => {
       const title = slide.block.title || 'Untitled';
-      // Calculate the timestamp for this slide using the same logic as the timer
-      const slideTimestamp = startTime + (index * duration);
-      const adjustedTimestamp = this.convertScheduleTimestampToLocalTime(slideTimestamp);
-      const timestamp = new Date(adjustedTimestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      // Calculate the timestamp for this slide relative to the current cycle
+      const slideTimestamp = currentCycleStart + (index * duration);
+      // Use the raw timestamp without conversion to match channel info
+      const timestamp = new Date(slideTimestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
       const combinedTitle = timestamp + ' : ' + title;
       console.log(combinedTitle);
       return `
