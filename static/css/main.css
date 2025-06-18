@@ -144,35 +144,20 @@ a.no-underline {
 
 #schedule .item {
   color: white;
-  font-family: hershey, sans-serif;
-  font-size: 14px;
-  line-height: 1.2;
-  padding: 4px 0;
-  margin-bottom: 4px;
+  line-height: 1;
   break-inside: avoid; /* Prevent items from splitting across columns */
-  opacity: 1;
-}
-
-#schedule .item .title {
-  margin-bottom: 2px;
-  color: white;
-  opacity: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.7;
 }
 
 #schedule .item.current {
-  color: #fff;
-  background: rgba(255,255,255,0.1);
-  padding: 4px;
+  opacity: 1;
 }
 
 #schedule .item.past {
   opacity: 0.4;
-}
-
-#schedule .item .channel {
-  font-size: 12px;
-  opacity: 0.7;
-  color: white;
 }
 
 #channel-info {

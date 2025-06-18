@@ -549,7 +549,8 @@ export class Slideshow {
       
       // Update channel and image info
       const channel_info = document.getElementById('channel-info');
-      channel_info.textContent = slide.block.channel_title + ' : ' + slide.block.title;
+      const timestamp = new Date(slide.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      channel_info.textContent = timestamp + ' : ' + slide.block.title;
       console.log('Now showing:', slide.block.title, 'from', slide.block.channel_title);
       
       // Update schedule grid to reflect current slide
@@ -595,9 +596,7 @@ export class Slideshow {
 
   startTimer() {
     let lastIndex = this.currentIndex;
-    let lastDebugTime = 0;
-    let lastSyncTime = 0;
-    
+
     const tick = () => {
       if (!this.isInitialized || this.isPaused) {
         requestAnimationFrame(tick);
@@ -617,7 +616,7 @@ export class Slideshow {
       // Force resync if time difference is too large
       if (Math.abs(this.time.getTimeDifference()) > 1000) {
         this.time.syncTime().then(() => {
-          lastSyncTime = now;
+          this.time.lastSyncTime = now;
         });
       }
       
@@ -680,11 +679,13 @@ export class Slideshow {
     const schedule = this.schedule.schedule;
     grid.innerHTML = schedule.map((slide, index) => {
       const title = slide.block.title || 'Untitled';
-      const truncatedTitle = title.length > 50 ? title.substring(0, 47) + '...' : title;
+      // Convert unix timestamp to local time
+      const timestamp = new Date(slide.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const combinedTitle = timestamp + ' : ' + title;
+      console.log(combinedTitle);
       return `
         <div class="item">
-          <div class="title">${truncatedTitle}</div>
-          <div class="channel">${slide.block.channel_title || 'Untitled Channel'}</div>
+          ${combinedTitle}
         </div>
       `;
     }).join('');
