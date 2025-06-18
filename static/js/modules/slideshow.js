@@ -377,12 +377,8 @@ export class Slideshow {
     let newElement;
     
     try {
-      // Remove any existing slides that aren't the current one
-      Array.from(this.container.querySelectorAll('.slide')).forEach(slide => {
-        slide.remove();
-      });
-      this.currentImage = null;
-
+      // DO NOT REMOVE ALL SLIDES HERE
+      // this.currentImage will be the old slide, if any
       if (type === 'Image') {
         newElement = new Image();
         newElement.className = 'slide';
@@ -536,19 +532,16 @@ export class Slideshow {
       
       // Make new element active
       requestAnimationFrame(() => {
-        // If there's a current element, mark it as previous
-        if (this.currentImage) {
-          this.currentImage.classList.remove('active');
-          this.currentImage.classList.add('previous');
-          
-          // Remove old previous slides after a delay to ensure smooth transition
+        // Save reference to the old slide
+        const oldSlide = this.currentImage;
+        if (oldSlide) {
+          oldSlide.classList.remove('active');
+          oldSlide.classList.add('previous');
+          // Remove old slide after fade
           setTimeout(() => {
-            if (this.currentImage && this.currentImage !== newElement) {
-              this.currentImage.remove();
-            }
+            if (oldSlide.parentNode) oldSlide.remove();
           }, 1000); // Match this with your CSS transition duration
         }
-        
         // Activate new element
         newElement.classList.add('active');
         this.currentImage = newElement;
