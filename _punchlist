@@ -1,8 +1,6 @@
-/ replace all vimeo with locally stored mp4
-x should any videos have sound? im not sure
++ should any videos have sound? im not sure
 + deploy including git repo on pair.com server
 + server setup description recorded
-- sent to sara
 + download files link to dia form
 + add poster.pdf to download files
 X dia form css?
@@ -10,13 +8,21 @@ X dia form css?
 + add schedule (to #overlay)
 + fix css columns to avoid blank lines at top of column (requires fixed contained height for safari)
 + add swipe gesture on mobile to match arrows function
-- time refactor to have js serve current time
-- vimeo file download
++ server monitoring / observability?
++ check server generation on pair.com
 + git clone workflow for syncing code
-- check server generation on pair.com
+- set up arena-momentum.org
+- send README to sara
+- set up cron job on pair.com
+- schedule time refactor to serve current local time
+- vimeo file download
 - #colophon columns
-- are.na make channels public, add 'readme'?
+
+housekeeping
+- make sure arena-momentum.org domain registration is handled by dia
+- are.na make channels public
 - are.na how to facilitate uploading user documentation, instructions block?
   - instructions on whitelisting: Ongoing Documenation uploads, Ongoing documentation
-- server monitoring / observability?
+  - Arena Archivist should be transfered to Dia
+  - Block in https://www.are.na/arena-momentum/uploads-c67sqydsvry should be added by Arena Archivist
 

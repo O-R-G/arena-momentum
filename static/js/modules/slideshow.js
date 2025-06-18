@@ -705,10 +705,15 @@ export class Slideshow {
     if (!grid || !this.schedule) return;
 
     const schedule = this.schedule.schedule;
+    const startTime = schedule[0].timestamp;
+    const duration = this.schedule.metadata.slide_duration;
+    const totalDuration = schedule.length * duration;
+    
     grid.innerHTML = schedule.map((slide, index) => {
       const title = slide.block.title || 'Untitled';
-      // Convert unix timestamp to local time
-      const adjustedTimestamp = this.convertScheduleTimestampToLocalTime(slide.timestamp);
+      // Calculate the timestamp for this slide using the same logic as the timer
+      const slideTimestamp = startTime + (index * duration);
+      const adjustedTimestamp = this.convertScheduleTimestampToLocalTime(slideTimestamp);
       const timestamp = new Date(adjustedTimestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
       const combinedTitle = timestamp + ' : ' + title;
       console.log(combinedTitle);

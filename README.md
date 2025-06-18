@@ -197,41 +197,12 @@ The project includes scripts for deploying to both staging and production enviro
      ssh diaarena@216.146.208.144
      ```
 
-### Deployment Scripts
+### Deployment
 
-The project includes two deployment scripts:
+Deployment is done by pulling the main git repo on the pair.com server.
 
-1. Staging Deployment:
-   ```bash
-   # Preview changes without uploading
-   ./scripts/upload-staging.sh --dry-run
-   
-   # Deploy to staging
-   ./scripts/upload-staging.sh
-   ```
-
-2. Production Deployment:
-   ```bash
-   # Preview changes without uploading
-   ./scripts/upload-production.sh --dry-run
-   
-   # Deploy to production
-   ./scripts/upload-production.sh
-   ```
-
-Both scripts will:
-- Check if the target directory exists and is writable
-- Upload all files except:
-  - `.DS_Store`
-  - `.git`
-  - `arena-momentum.pem`
-  - `scripts/`
-  - `setup_aws.sh`
-  - `upload_cache.sh`
-  - `start.sh`
-
-The staging site is available at: https://staging.arena-momentum.org
-The production site is available at: https://arena-momentum.org
+- Production is the arena-momentum.org folder
+- Staging is the staging.arena-momentum.org folder
 
 ## Monitoring
 
