@@ -117,15 +117,10 @@ a.no-underline {
 }
 
 #colophon .content {
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-  width: 100%;
-}
-
-#colophon .content > * {
-  flex: 1;
-  min-width: 0; /* Prevents flex items from overflowing */
+  columns: 300px 6;
+  column-gap: 44px;
+  column-fill: balance;
+  margin-top: 20px;
 }
 
 #schedule {
