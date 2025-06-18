@@ -209,7 +209,7 @@ export class Slideshow {
       const slide = schedule[nextIndex];
       
       if (slide.block.type === 'Image') {
-        await this.preloadImage(slide.block.image_url);
+        await this.preloadImage(slide);
       } else if (slide.block.type === 'Media') {
         await this.preloadVideo(slide);
       } else if (slide.block.type === 'Attachment') {
@@ -219,16 +219,19 @@ export class Slideshow {
     }
   }
 
-  async preloadImage(url) {
-    if (!this.preloadedImages.has(url)) {
+  async preloadImage(slide) {
+    // Use local file if available, otherwise fall back to remote URL
+    const imageUrl = slide.local_file || slide.block.image_url;
+    
+    if (!this.preloadedImages.has(imageUrl)) {
       return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
-          this.preloadedImages.set(url, img);
+          this.preloadedImages.set(imageUrl, img);
           resolve();
         };
         img.onerror = reject;
-        img.src = url;
+        img.src = imageUrl;
       });
     }
   }
@@ -384,11 +387,14 @@ export class Slideshow {
         newElement = new Image();
         newElement.className = 'slide';
         
+        // Use local file if available, otherwise fall back to remote URL
+        const imageUrl = slide.local_file || slide.block.image_url;
+        
         // Load the image first
         await new Promise((resolve, reject) => {
           newElement.onload = resolve;
           newElement.onerror = reject;
-          newElement.src = slide.block.image_url;
+          newElement.src = imageUrl;
         });
       } else if (type === 'Media') {
         // Check if we have a preloaded video

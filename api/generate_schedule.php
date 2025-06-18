@@ -19,6 +19,157 @@ class ScheduleGenerator {
     return date('Y-m-d');
   }
   
+  private function ensureCacheDirectory() {
+    $cache_dir = $this->config['paths']['cache_dir'];
+    if (!file_exists($cache_dir)) {
+      mkdir($cache_dir, 0755, true);
+      echo "Created cache directory: {$cache_dir}\n";
+    }
+  }
+  
+  private function downloadFile($url, $filename) {
+    $this->ensureCacheDirectory();
+    
+    $cache_dir = $this->config['paths']['cache_dir'];
+    $filepath = $cache_dir . '/' . $filename;
+    
+    // Skip if file already exists
+    if (file_exists($filepath)) {
+      echo "File already exists: {$filename}\n";
+      return $filepath;
+    }
+    
+    echo "Downloading: {$filename}\n";
+    
+    // Create a cURL handle
+    $ch = curl_init($url);
+    $fp = fopen($filepath, 'wb');
+    
+    curl_setopt($ch, CURLOPT_FILE, $fp);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 300); // 5 minute timeout
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; ArenaMomentum/1.0)');
+    
+    $success = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    
+    curl_close($ch);
+    fclose($fp);
+    
+    if (!$success || $http_code !== 200) {
+      // Remove the file if download failed
+      if (file_exists($filepath)) {
+        unlink($filepath);
+      }
+      echo "Failed to download {$filename} (HTTP {$http_code})\n";
+      return null;
+    }
+    
+    echo "Successfully downloaded: {$filename}\n";
+    return $filepath;
+  }
+  
+  private function normalizeFilename($title, $extension) {
+    // Normalize the block title to create a safe filename
+    $normalized = strtolower($title);
+    $normalized = preg_replace('/[^a-z0-9_\-]/', '_', $normalized);
+    $normalized = preg_replace('/_+/', '_', $normalized); // Replace multiple underscores with single
+    $normalized = trim($normalized, '_'); // Remove leading/trailing underscores
+    
+    // Limit length to avoid filesystem issues
+    if (strlen($normalized) > 100) {
+      $normalized = substr($normalized, 0, 100);
+    }
+    
+    return $normalized . '.' . $extension;
+  }
+  
+  private function attemptDownload($block) {
+    $local_file = null;
+    
+    try {
+      if ($block['type'] === 'Image' && isset($block['image_url'])) {
+        // Download image
+        $extension = 'jpg'; // Default to jpg
+        
+        // Try to detect extension from URL
+        if (preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $block['image_url'], $matches)) {
+          $extension = strtolower($matches[1]);
+        }
+        
+        $filename = $this->normalizeFilename($block['title'], $extension);
+        $filepath = $this->downloadFile($block['image_url'], $filename);
+        
+        if ($filepath) {
+          $local_file = str_replace(__DIR__, '', $filepath);
+          // Ensure the path starts with /api
+          if (strpos($local_file, '/api') !== 0) {
+            $local_file = '/api' . $local_file;
+          }
+        }
+        
+      } elseif ($block['type'] === 'Attachment' && isset($block['video_url'])) {
+        // Download video attachment
+        $extension = 'mp4'; // Default for video attachments
+        
+        // Try to detect extension from URL or content type
+        if (preg_match('/\.(mp4|mov|avi|mkv|webm)$/i', $block['video_url'], $matches)) {
+          $extension = strtolower($matches[1]);
+        } elseif (isset($block['content_type'])) {
+          // Map content type to extension
+          $content_type_map = [
+            'video/mp4' => 'mp4',
+            'video/quicktime' => 'mov',
+            'video/x-msvideo' => 'avi',
+            'video/x-matroska' => 'mkv',
+            'video/webm' => 'webm'
+          ];
+          if (isset($content_type_map[$block['content_type']])) {
+            $extension = $content_type_map[$block['content_type']];
+          }
+        }
+        
+        $filename = $this->normalizeFilename($block['title'], $extension);
+        $filepath = $this->downloadFile($block['video_url'], $filename);
+        
+        if ($filepath) {
+          $local_file = str_replace(__DIR__, '', $filepath);
+          // Ensure the path starts with /api
+          if (strpos($local_file, '/api') !== 0) {
+            $local_file = '/api' . $local_file;
+          }
+        }
+        
+      } elseif ($block['type'] === 'Media' && isset($block['source_url'])) {
+        // For Media blocks, we'll handle Vimeo downloads later
+        // For now, just check if we have existing cached files
+        if (preg_match('/vimeo\.com\/(\d+)/', $block['source_url'], $matches)) {
+          $normalized_title = $this->normalizeFilename($block['title'], 'mp4');
+          $cache_dir = $this->config['paths']['cache_dir'];
+          $possible_files = [
+            $cache_dir . '/' . $normalized_title,
+            $cache_dir . '/' . str_replace('.mp4', ' (720p).mp4', $normalized_title)
+          ];
+          
+          foreach ($possible_files as $file) {
+            if (file_exists($file)) {
+              $local_file = str_replace(__DIR__, '', $file);
+              // Ensure the path starts with /api
+              if (strpos($local_file, '/api') !== 0) {
+                $local_file = '/api' . $local_file;
+              }
+              break;
+            }
+          }
+        }
+      }
+    } catch (Exception $e) {
+      echo "Error downloading file for block '{$block['title']}': " . $e->getMessage() . "\n";
+    }
+    
+    return $local_file;
+  }
+  
   private function shuffleChannelsAndBlocks($blocks) {
     // First, group blocks by channel
     $channels = [];
@@ -82,44 +233,15 @@ class ScheduleGenerator {
     $start_of_day = strtotime('today midnight');  // Changed to explicitly use midnight
     $total_duration = count($blocks) * $duration;
     
+    echo "Processing " . count($blocks) . " blocks for schedule generation...\n";
+    
     foreach ($blocks as $index => $block) {
       $timestamp = $start_of_day + ($index * $duration);
       
-      // Check if we have a local file for this block
-      $local_file = null;
-      if ($block['type'] === 'Media' && isset($block['source_url'])) {
-        // Extract video ID from Vimeo URL
-        if (preg_match('/vimeo\.com\/(\d+)/', $block['source_url'], $matches)) {
-          // Normalize the block title to match cache filename format
-          $normalized_title = strtolower($block['title']);
-          $normalized_title = preg_replace('/[^a-z0-9_\-]/', '_', $normalized_title);
-          $normalized_title = preg_replace('/_+/', '_', $normalized_title); // Replace multiple underscores with single
-          $normalized_title = trim($normalized_title, '_'); // Remove leading/trailing underscores
-          
-          // Check for both with and without (720p) suffix
-          $cache_dir = __DIR__ . "/cache";
-          $possible_files = [
-            "{$cache_dir}/{$normalized_title}.mp4",
-            "{$cache_dir}/{$normalized_title} (720p).mp4"
-          ];
-          
-          // Debug output
-          error_log("Checking for local file for block: {$block['title']}");
-          error_log("Normalized title: {$normalized_title}");
-          
-          foreach ($possible_files as $file) {
-            if (file_exists($file)) {
-              $local_file = str_replace(__DIR__, '', $file);
-              // Ensure the path starts with /api
-              if (strpos($local_file, '/api') !== 0) {
-                $local_file = '/api' . $local_file;
-              }
-              error_log("Found local file: {$local_file}");
-              break;
-            }
-          }
-        }
-      }
+      echo "Processing block " . ($index + 1) . " of " . count($blocks) . ": {$block['title']} ({$block['type']})\n";
+      
+      // Attempt to download file to cache
+      $local_file = $this->attemptDownload($block);
       
       $schedule[] = [
         'timestamp' => $timestamp,
@@ -128,6 +250,8 @@ class ScheduleGenerator {
         'local_file' => $local_file
       ];
     }
+    
+    echo "Schedule generation complete!\n";
     
     return [
       'schedule' => $schedule,
