@@ -36,19 +36,15 @@ export class Overlay {
   }
 
   setVisibility(isVisible) {
-    if (this.overlay) {
-      DOM.setOpacity(this.overlay, isVisible ? '0.9' : '0');
-      DOM.setPointerEvents(this.overlay, isVisible ? 'auto' : 'none');
-      
-      if (isVisible) {
-        // Only hide colophon, keep schedule visible if it's being shown
-        DOM.setDisplay(this.colophon, 'none');
-        // Only show about if no other section is visible
-        if (this.schedule.style.display !== 'block' && this.colophon.style.display !== 'block') {
-          DOM.setDisplay(this.about, 'block');
-        }
-      }
-      DOM.scrollToTop();
+    if (isVisible) {
+      DOM.setDisplay(this.colophon, 'none');
+      DOM.setDisplay(this.schedule, 'none');
+      DOM.setDisplay(this.about, 'block');
+      DOM.setOpacity(this.overlay, '0.9');
+      DOM.setPointerEvents(this.overlay, 'auto');
+    } else {
+      DOM.setOpacity(this.overlay, '0');
+      DOM.setPointerEvents(this.overlay, 'none');
     }
   }
 } 
