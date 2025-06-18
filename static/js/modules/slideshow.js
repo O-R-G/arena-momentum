@@ -33,7 +33,6 @@ export class Slideshow {
       
       // Create container first
       if (!this.container) {
-        console.log('Creating container');
         this.container = DOM.createElement('div', {
           id: 'slideshow',
           style: {
@@ -142,17 +141,31 @@ export class Slideshow {
     document.body.appendChild(errorDiv);
   }
 
-  determineCurrentSlide() {
+  getAdjustedTime() {
     const now = this.time.getCurrentTime();
     const schedule = this.schedule.schedule;
-    console.log('Current time:', now);
-    console.log('First slide time:', schedule[0].timestamp);
+    const startTime = schedule[0].timestamp;
+    const dayDuration = schedule[schedule.length - 1].timestamp - schedule[0].timestamp;
+    const timeIntoSchedule = (now - startTime) % dayDuration;
+    const adjustedTime = startTime + timeIntoSchedule;
+    return adjustedTime;
+  }
+
+  convertToDisplayTime(timestamp) {
+    const schedule = this.schedule.schedule;
+    const startTime = schedule[0].timestamp;
+    const dayDuration = schedule[schedule.length - 1].timestamp - schedule[0].timestamp;
+    const timeIntoSchedule = (timestamp - startTime) % dayDuration;
+    const displayTime = startTime + timeIntoSchedule;
+    return displayTime;
+  }
+
+  determineCurrentSlide() {
+    const now = this.getAdjustedTime();
+    const schedule = this.schedule.schedule;
     
     // If we're past the last slide of the day, adjust current time to be relative to first slide
     if (now > schedule[schedule.length - 1].timestamp) {
-      const dayDuration = schedule[schedule.length - 1].timestamp - schedule[0].timestamp;
-      const timeIntoSchedule = (now - schedule[0].timestamp) % dayDuration;
-      const adjustedTime = schedule[0].timestamp + timeIntoSchedule;
       console.log('Adjusted time:', adjustedTime);
       
       // Find the appropriate slide for the adjusted time
@@ -547,10 +560,7 @@ export class Slideshow {
       });
       
       // Update channel and image info
-      const channel_info = document.getElementById('channel-info');
-      const timestamp = new Date(slide.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      channel_info.textContent = timestamp + ' : ' + slide.block.title;
-      console.log('Now showing:', slide.block.title, 'from', slide.block.channel_title);
+      this.showChannelInfo(index);
       
       // Update schedule grid to reflect current slide
       this.updateScheduleGrid();
@@ -611,6 +621,8 @@ export class Slideshow {
       // Calculate which slide should be showing based on elapsed time
       const elapsedTime = (now - startTime) % totalDuration;
       const slideIndex = Math.floor(elapsedTime / duration);
+
+      this.showChannelInfo(slideIndex);
       
       // Force resync if time difference is too large
       if (Math.abs(this.time.getTimeDifference()) > 1000) {
@@ -638,6 +650,15 @@ export class Slideshow {
     this.isPaused = false;
     // Force a re-evaluation of the current slide
     this.determineCurrentSlide();
+  }
+
+  showChannelInfo(index) {
+    const schedule = this.schedule.schedule;
+    const slide = schedule[index];
+    const channel_info = document.getElementById('channel-info');
+    const timestamp = this.getAdjustedTime();
+    const formattedTimestamp = new Date(timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    channel_info.textContent = formattedTimestamp + ' : ' + slide.block.title;
   }
 
   updateScheduleGrid() {

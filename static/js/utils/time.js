@@ -27,8 +27,6 @@ export class Time {
   async _doSync() {
     const startTime = performance.now();
 
-    console.log("Start time", startTime);
-
     try {
       const response = await fetch('/api/time.php');
       if (!response.ok) {

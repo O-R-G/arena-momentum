@@ -10,9 +10,9 @@ X dia form css?
 + add schedule (to #overlay)
 + fix css columns to avoid blank lines at top of column (requires fixed contained height for safari)
 + add swipe gesture on mobile to match arrows function
-- time refactor to have PHP serve current (and surrounding slides)
+- time refactor to have js serve current time
 - vimeo file download
-- git clone workflow for syncing code
++ git clone workflow for syncing code
 - check server generation on pair.com
 - #colophon columns
 - are.na make channels public, add 'readme'?
