@@ -13,13 +13,14 @@ x dia form css?
 + git clone workflow for syncing code
 + #colophon columns
 + schedule time refactor to serve current local time
++ fix scrollToTop() for mobile and desktop
 - set up arena-momentum.org
 - send README to sara
 - set up cron job on pair.com
 - vimeo file download
 
   housekeeping
-/ make sure arena-momentum.org domain registration is handled by dia
++ make sure arena-momentum.org domain registration is handled by dia
 - are.na make channels public
 - are.na how to facilitate uploading user documentation, instructions block?
   - instructions on whitelisting: Uploads, Documentation
