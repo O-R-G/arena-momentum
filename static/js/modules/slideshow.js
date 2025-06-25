@@ -1,6 +1,5 @@
 import { Time } from '../utils/time.js';
 import { DOM } from '../utils/dom.js';
-import { Animation } from '../modules/animation.js';
 
 export class Slideshow {
   constructor() {
@@ -760,14 +759,14 @@ export class Slideshow {
       if (swipeDistance > 0) {
         // Swipe right - go to previous slide
         console.log('Swiping right - going to previous slide');
-        Animation.speed = Math.abs(Animation.speed) + 0.025;
-        Animation.direction = 1; // Clockwise
+        // Animation.speed = Math.abs(Animation.speed) + 0.025;
+        // Animation.direction = 1; // Clockwise
         this.shuttle('prev');
       } else {
         // Swipe left - go to next slide
         console.log('Swiping left - going to next slide');
-        Animation.speed = Math.abs(Animation.speed) + 0.025;
-        Animation.direction = -1; // Counterclockwise
+        // Animation.speed = Math.abs(Animation.speed) + 0.025;
+        // Animation.direction = -1; // Counterclockwise
         this.shuttle('next');
       }
     }
