@@ -18,11 +18,14 @@ x dia form css?
 - send README to sara
 - set up cron job on pair.com
 - vimeo file download
-
-  housekeeping
 + make sure arena-momentum.org domain registration is handled by dia
-- are.na make channels public
-- are.na how to facilitate uploading user documentation, instructions block?
-  - instructions on whitelisting: Uploads, Documentation
-  - Arena Archivist should be transfered to Dia
-  - Block in https://www.are.na/arena-momentum/uploads-c67sqydsvry should be added by Arena Archivist
++ are.na make channels public
++ are.na how to facilitate uploading user documentation, instructions block?
+  + instructions on whitelisting: Uploads, Documentation
+  + Block in https://www.are.na/arena-momentum/uploads-c67sqydsvry should be added by Arena Archivist
+  - Arena Archivist transferred to Dia?
++ mobile js scrolltotop not working as expected
++ mobile js add scrollToHideToolbariOS() to facilitate fullscreen when rotated
+x mobile swipe gesture should speed up momentum logo animation (turned off swipe gesture)
+- ios skipping in schedule sometimes 
+- ios sometimes momentum logo becomes black
