@@ -1,5 +1,11 @@
 import { Time } from '../utils/time.js';
 import { DOM } from '../utils/dom.js';
+import { Animation } from '../modules/animation.js';
+
+/*
+  handleKeydown(event) {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+*/
 
 export class Slideshow {
   constructor() {
@@ -757,6 +763,10 @@ export class Slideshow {
     });
     
     if (Math.abs(swipeDistance) > swipeThreshold) {
+  
+// debug        
+Animation.handleKeydown(e);
+
       if (swipeDistance > 0) {
         // Swipe right - go to previous slide
         console.log('Swiping right - going to previous slide');
