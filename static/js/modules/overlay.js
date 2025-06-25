@@ -6,6 +6,11 @@ export class Overlay {
     this.about = DOM.getElement('about');
     this.schedule = DOM.getElement('schedule');
     this.colophon = DOM.getElement('colophon');
+    this.init();
+  }
+
+  init() {
+    DOM.scrollToHideToolbariOS(this.overlay);
   }
 
   show(id) {

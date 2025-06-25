@@ -171,6 +171,7 @@ export class Animation {
       this.isFlipping = true;
       this.flipProgress = 0;
       this.onFlip(!this.isFlipped);
+      DOM.scrollToTop(DOM.getElement('overlay'));
     }
   }
 

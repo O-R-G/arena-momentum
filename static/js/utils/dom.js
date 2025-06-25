@@ -28,6 +28,13 @@ export class DOM {
   static scrollToTop(element) {
     window.scrollTo(0, 0);
     element.scrollTo(0, 0);
+console.log('** DOM.scrollToTop() called **');
+  }
+
+  static scrollToHideToolbariOS(element) {
+    window.scrollTo(0, 400);
+    element.scrollTo(0, 400);
+console.log('** DOM.scrollToHideToolbariOS() called **');
   }
 
   static scrollIntoView(element, options = { behavior: 'smooth', block: 'center' }) {
