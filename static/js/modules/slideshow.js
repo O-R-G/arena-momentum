@@ -2,11 +2,6 @@ import { Time } from '../utils/time.js';
 import { DOM } from '../utils/dom.js';
 import { Animation } from '../modules/animation.js';
 
-/*
-  handleKeydown(event) {
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-*/
-
 export class Slideshow {
   constructor() {
     this.schedule = null;
@@ -69,7 +64,6 @@ export class Slideshow {
 
         this.container.addEventListener('touchend', (e) => {
           this.touchEndX = e.changedTouches[0].screenX;
-          this.handleSwipe();
         }, { passive: true });
         
         document.body.insertBefore(this.container, document.body.firstChild);
@@ -762,18 +756,18 @@ export class Slideshow {
       threshold: swipeThreshold
     });
     
-    if (Math.abs(swipeDistance) > swipeThreshold) {
-  
-// debug        
-Animation.handleKeydown(e);
-
+    if (Math.abs(swipeDistance) > swipeThreshold) {  
       if (swipeDistance > 0) {
         // Swipe right - go to previous slide
         console.log('Swiping right - going to previous slide');
+        Animation.speed = Math.abs(this.speed) + 0.025;
+        Animation.direction = 1; // Clockwise
         this.shuttle('prev');
       } else {
         // Swipe left - go to next slide
         console.log('Swiping left - going to next slide');
+        Animation.speed = Math.abs(this.speed) + 0.025;
+        Animation.direction = -1; // Counterclockwise
         this.shuttle('next');
       }
     }

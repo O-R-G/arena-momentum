@@ -176,11 +176,6 @@ export class Animation {
   }
 
   handleKeydown(event) {
-
-// debug
-console.log('** handleKeyDown() called **');
-console.log(event);
-
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {    
       if (this.originalIndex === null) {
         this.originalIndex = window.slideshow.currentIndex;
