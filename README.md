@@ -50,11 +50,53 @@ This project creates a synchronized slideshow from Are.na channels. It fetches c
 ## Configuration Options
 
 - `arena.access_token` - Your Are.na API access token
-- `arena.group_id` - ID of the Are.na group containing channels
+- `arena.user_id` - ID of the Are.na user whose channels to fetch
+- `vimeo.client_id` - Your Vimeo API client ID (optional)
+- `vimeo.client_secret` - Your Vimeo API client secret (optional)
+- `vimeo.access_token` - Your Vimeo API access token (optional)
 - `display.slide_duration` - How long each slide shows (in seconds)
 - `display.preload_count` - Number of upcoming slides to preload
 - `paths.schedule_file` - Where the daily schedule is stored
-- `paths.cache_dir` - Where downloaded images are cached
+- `paths.cache_dir` - Where downloaded images and videos are cached
+
+## Vimeo API Integration
+
+The system can download Vimeo videos locally for better performance and reliability. This is optional - if Vimeo API credentials are not configured, the system will fall back to using Vimeo embed codes.
+
+### Setup
+
+1. Create a Vimeo app at https://developer.vimeo.com/apps
+2. Get your Client ID, Client Secret, and Access Token
+3. Add them to your `api/config.php`:
+
+```php
+'vimeo' => [
+  'client_id' => 'your_client_id',
+  'client_secret' => 'your_client_secret', 
+  'access_token' => 'your_access_token',
+],
+```
+
+### How it works
+
+- When generating the schedule, the system attempts to download Vimeo videos using the Vimeo API
+- Downloaded videos are cached in the `api/cache/` directory
+- If download fails (API error, no download available, etc.), the system falls back to using Vimeo embed codes
+- The frontend automatically uses local files when available, falling back to embeds when not
+
+### Benefits
+
+- **Better Performance**: Local videos load faster than embedded videos
+- **Reliability**: No dependency on Vimeo's embed service
+- **Offline Capability**: Videos work even if Vimeo is down
+- **Consistent Experience**: All videos play the same way regardless of source
+
+### Fallback Behavior
+
+If Vimeo API credentials are not configured or downloads fail:
+1. System checks for existing cached video files
+2. If no cached files found, uses Vimeo embed codes
+3. Frontend automatically handles the transition between local files and embeds
 
 ## Running
 
