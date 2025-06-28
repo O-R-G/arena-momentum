@@ -3,7 +3,7 @@
 + server setup description recorded
 + download files link to dia form
 + add poster.pdf to download files
-X dia form css?
+x dia form css?
 + examine radio synchronicity when two (or more) browser windows open
 + add schedule (to #overlay)
 + fix css columns to avoid blank lines at top of column (requires fixed contained height for safari)
@@ -11,18 +11,21 @@ X dia form css?
 + server monitoring / observability?
 + check server generation on pair.com
 + git clone workflow for syncing code
++ #colophon columns
++ schedule time refactor to serve current local time
++ fix scrollToTop() for mobile and desktop
 - set up arena-momentum.org
 - send README to sara
 - set up cron job on pair.com
-- schedule time refactor to serve current local time
 - vimeo file download
-- #colophon columns
-
-housekeeping
-- make sure arena-momentum.org domain registration is handled by dia
-- are.na make channels public
-- are.na how to facilitate uploading user documentation, instructions block?
-  - instructions on whitelisting: Ongoing Documenation uploads, Ongoing documentation
-  - Arena Archivist should be transfered to Dia
-  - Block in https://www.are.na/arena-momentum/uploads-c67sqydsvry should be added by Arena Archivist
-
++ make sure arena-momentum.org domain registration is handled by dia
++ are.na make channels public
++ are.na how to facilitate uploading user documentation, instructions block?
+  + instructions on whitelisting: Uploads, Documentation
+  + Block in https://www.are.na/arena-momentum/uploads-c67sqydsvry should be added by Arena Archivist
+  - Arena Archivist transferred to Dia?
++ mobile js scrolltotop not working as expected
++ mobile js add scrollToHideToolbariOS() to facilitate fullscreen when rotated
+x mobile swipe gesture should speed up momentum logo animation (turned off swipe gesture)
+- ios skipping in schedule sometimes 
+- ios sometimes momentum logo becomes black

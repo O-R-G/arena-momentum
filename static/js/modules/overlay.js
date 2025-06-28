@@ -6,13 +6,19 @@ export class Overlay {
     this.about = DOM.getElement('about');
     this.schedule = DOM.getElement('schedule');
     this.colophon = DOM.getElement('colophon');
+    this.init();
+  }
+
+  init() {
+    DOM.scrollToHideToolbariOS(this.overlay);
   }
 
   show(id) {
-    // First hide all sections
+    // First hide all sections and scroll to top
     DOM.setDisplay(this.about, 'none');
     DOM.setDisplay(this.schedule, 'none');
     DOM.setDisplay(this.colophon, 'none');
+    DOM.scrollToTop(DOM.getElement('overlay'));
     
     // Then show the requested section
     const element = DOM.getElement(id);
@@ -24,15 +30,14 @@ export class Overlay {
       if (id === 'schedule' && window.slideshow) {
         window.slideshow.createScheduleGrid();
       }
-    }
-    
-    DOM.scrollToTop();
+    }    
   }
 
   hide(id) {
+    // Scroll to top, show #about, then hide id
+    DOM.scrollToTop(DOM.getElement('overlay'));
     DOM.setDisplay(this.about, 'block');
     DOM.setDisplay(DOM.getElement(id), 'none');
-    DOM.scrollToTop();
   }
 
   setVisibility(isVisible) {

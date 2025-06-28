@@ -63,7 +63,6 @@ export class Slideshow {
 
         this.container.addEventListener('touchend', (e) => {
           this.touchEndX = e.changedTouches[0].screenX;
-          this.handleSwipe();
         }, { passive: true });
         
         document.body.insertBefore(this.container, document.body.firstChild);
@@ -756,7 +755,7 @@ export class Slideshow {
       threshold: swipeThreshold
     });
     
-    if (Math.abs(swipeDistance) > swipeThreshold) {
+    if (Math.abs(swipeDistance) > swipeThreshold) {  
       if (swipeDistance > 0) {
         // Swipe right - go to previous slide
         console.log('Swiping right - going to previous slide');

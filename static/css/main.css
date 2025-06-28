@@ -88,16 +88,12 @@ a.no-underline {
   width: auto;
   height: 100vh;
   background: #333;
-  padding: 40px;
+  padding: 36px;
   color: white;
-  font-family: hershey, sans-serif;
-  font-size: 18px;
-  line-height: 1.4;
   overflow-y: auto;
   opacity: 0;
   pointer-events: none;
   z-index: 1;
-  padding: 2em;
   transition: opacity 0.75s ease; 
 }
 
@@ -105,11 +101,13 @@ a.no-underline {
   columns: 300px 6;
   column-gap: 44px;
   column-fill: balance;
+  padding-bottom: 300px;
 }
 
 #colophon { 
   display: none;
   width: 100%;
+  padding-bottom: 300px;
 }
 
 #colophon .header {
@@ -120,19 +118,18 @@ a.no-underline {
   columns: 300px 6;
   column-gap: 44px;
   column-fill: balance;
-  margin-top: 20px;
 }
 
 #schedule {
   display: none;
   opacity: 1 !important;
+  padding-bottom: 300px;
 }
 
 #schedule-grid {
   columns: 300px 6;
   column-gap: 44px;
   column-fill: balance;
-  margin-top: 20px;
   opacity: 1;
   color: white;
 }
@@ -204,7 +201,7 @@ a.no-underline {
     break-inside: avoid;
     page-break-inside: avoid; 
     display: block;           
-    margin-bottom: 1em;
+    /* margin-bottom: 1em; */
     /* padding: 1em; */
 }
 
@@ -214,7 +211,6 @@ a.no-underline {
 
     #overlay {
       position: relative;
-      padding-bottom: 300px;
       height: initial;
       min-height: 100vh;
     }
