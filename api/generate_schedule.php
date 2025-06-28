@@ -1,9 +1,11 @@
 <?php
 
 require __DIR__ . '/fetch_arena.php';
+require __DIR__ . '/vimeo_api.php';
 
 class ScheduleGenerator {
   private $arena;
+  private $vimeo;
   private $config;
   
   public function __construct($config) {
@@ -12,6 +14,14 @@ class ScheduleGenerator {
       $config['arena']['access_token'],
       $config['arena']['user_id']
     );
+    
+    // Initialize Vimeo API if credentials are provided
+    if (isset($config['vimeo']['access_token']) && $config['vimeo']['access_token'] !== 'YOUR_VIMEO_ACCESS_TOKEN_HERE') {
+      $this->vimeo = new VimeoAPI($config);
+    } else {
+      echo "Vimeo API credentials not configured, skipping Vimeo downloads\n";
+      $this->vimeo = null;
+    }
   }
   
   private function getDateSeed() {
@@ -141,24 +151,59 @@ class ScheduleGenerator {
         }
         
       } elseif ($block['type'] === 'Media' && isset($block['source_url'])) {
-        // For Media blocks, we'll handle Vimeo downloads later
-        // For now, just check if we have existing cached files
+        // Handle Vimeo videos using the Vimeo API
         if (preg_match('/vimeo\.com\/(\d+)/', $block['source_url'], $matches)) {
-          $normalized_title = $this->normalizeFilename($block['title'], 'mp4');
-          $cache_dir = $this->config['paths']['cache_dir'];
-          $possible_files = [
-            $cache_dir . '/' . $normalized_title,
-            $cache_dir . '/' . str_replace('.mp4', ' (720p).mp4', $normalized_title)
-          ];
+          $video_id = $matches[1];
           
-          foreach ($possible_files as $file) {
-            if (file_exists($file)) {
-              $local_file = str_replace(__DIR__, '', $file);
-              // Ensure the path starts with /api
-              if (strpos($local_file, '/api') !== 0) {
-                $local_file = '/api' . $local_file;
+          if ($this->vimeo) {
+            // Use Vimeo API to download the video
+            $filename = $this->normalizeFilename($block['title'], 'mp4');
+            $cache_dir = $this->config['paths']['cache_dir'];
+            $this->ensureCacheDirectory();
+            
+            try {
+              $filepath = $this->vimeo->downloadVideo($video_id, $filename, $cache_dir);
+              
+              if ($filepath) {
+                $local_file = str_replace(__DIR__, '', $filepath);
+                // Ensure the path starts with /api
+                if (strpos($local_file, '/api') !== 0) {
+                  $local_file = '/api' . $local_file;
+                }
+                echo "Successfully downloaded Vimeo video: {$block['title']}\n";
+              } else {
+                echo "Vimeo download failed for: {$block['title']}, falling back to embed\n";
+                $local_file = null; // This will cause frontend to use vimeo_url
               }
-              break;
+            } catch (Exception $e) {
+              echo "Vimeo API error for {$block['title']}: " . $e->getMessage() . ", falling back to embed\n";
+              $local_file = null; // This will cause frontend to use vimeo_url
+            }
+          } else {
+            // Fallback: check if we have existing cached files
+            $normalized_title = $this->normalizeFilename($block['title'], 'mp4');
+            $cache_dir = $this->config['paths']['cache_dir'];
+            $possible_files = [
+              $cache_dir . '/' . $normalized_title,
+              $cache_dir . '/' . str_replace('.mp4', ' (720p).mp4', $normalized_title)
+            ];
+            
+            foreach ($possible_files as $file) {
+              if (file_exists($file)) {
+                $local_file = str_replace(__DIR__, '', $file);
+                // Ensure the path starts with /api
+                if (strpos($local_file, '/api') !== 0) {
+                  $local_file = '/api' . $local_file;
+                }
+                echo "Found existing cached video: {$block['title']}\n";
+                break;
+              }
+            }
+            
+            // If no cached file found, fall back to embed
+            if (!isset($local_file)) {
+              echo "No cached video found for: {$block['title']}, falling back to embed\n";
+              $local_file = null; // This will cause frontend to use vimeo_url
             }
           }
         }
