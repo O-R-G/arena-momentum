@@ -6,6 +6,13 @@ return [
     'user_id' => 'YOUR_USER_ID_HERE',
   ],
   
+  // Vimeo API configuration
+  'vimeo' => [
+    'client_id' => 'YOUR_VIMEO_CLIENT_ID_HERE',
+    'client_secret' => 'YOUR_VIMEO_CLIENT_SECRET_HERE',
+    'access_token' => 'YOUR_VIMEO_ACCESS_TOKEN_HERE',
+  ],
+  
   // Display settings
   'display' => [
     // Duration for each slide in seconds
