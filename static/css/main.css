@@ -69,6 +69,14 @@ a.no-underline {
   object-fit: cover;
 }
 
+#slideshow .slide video {
+  width: 100vw;
+  height: 100vh;
+  border: none;
+  object-fit: cover;
+  background: black;
+}
+
 #slideshow .slide.active {
   opacity: 1;
   z-index: 2;

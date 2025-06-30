@@ -3,6 +3,7 @@ import { DOM } from '../utils/dom.js';
 
 export class Slideshow {
   constructor() {
+    this.container = document.getElementById('slideshow-container');
     this.schedule = null;
     this.currentIndex = 0;
     this.preloadedImages = new Map();
@@ -12,9 +13,34 @@ export class Slideshow {
     this.isPaused = false;
     this.lastSlideChange = 0;
     this.isInitialized = false;
-    this.debugMode = true; // Enable debug mode
+    this.debugMode = false; // Enable debug mode
     this.touchStartX = 0;
     this.touchEndX = 0;
+  }
+
+  async attemptVideoAutoplay(video, resolve) {
+    return new Promise((resolvePromise, reject) => {
+      video.addEventListener('loadedmetadata', async () => {
+        console.log('Video metadata loaded, attempting to play');
+        try {
+          await video.play();
+          console.log('Video started playing successfully');
+          resolvePromise();
+          if (resolve) resolve();
+        } catch (e) {
+          console.error('Error autoplaying video:', e);
+          // Just resolve to not block the slideshow
+          console.log('Resolving despite autoplay error to continue slideshow');
+          resolvePromise();
+          if (resolve) resolve();
+        }
+      });
+      
+      video.addEventListener('error', (e) => {
+        console.error('Error loading video:', e);
+        reject(e);
+      });
+    });
   }
 
   async init() {
@@ -264,17 +290,14 @@ export class Slideshow {
       
       // Only handle local video files
       if (slide.local_file) {
-        const video = DOM.createElement('video', {
-          width: '100%',
-          height: '100%',
-          playsinline: '',
-          muted: '',
-          autoplay: '',
-          loop: '',
-          'webkit-playsinline': '',
-          'x5-playsinline': '',
-          style: { objectFit: 'cover' }
-        });
+        const video = document.createElement('video');
+        video.width = '100%';
+        video.height = '100%';
+        video.playsInline = true;
+        video.muted = true;
+        video.autoplay = true;
+        video.loop = true;
+        video.style.objectFit = 'cover';
         
         const source = DOM.createElement('source', {
           src: slide.local_file,
@@ -284,23 +307,7 @@ export class Slideshow {
         wrapper.appendChild(video);
         
         // Wait for video to be ready and start playing
-        await new Promise((resolve, reject) => {
-          video.addEventListener('loadedmetadata', () => {
-            console.log('Preloaded video metadata loaded, attempting to play');
-            video.play().then(() => {
-              console.log('Preloaded video started playing successfully');
-              resolve();
-            }).catch(e => {
-              console.error('Error autoplaying preloaded video:', e);
-              reject(e);
-            });
-          });
-          
-          video.addEventListener('error', (e) => {
-            console.error('Error loading preloaded video:', e);
-            reject(e);
-          });
-        });
+        await this.attemptVideoAutoplay(video);
         
         this.preloadedVideos.set(slide.block.id, wrapper);
         
@@ -337,17 +344,14 @@ export class Slideshow {
   async preloadAttachmentVideo(slide) {
     if (slide.block.video_url) {
       console.log('Using attachment video:', slide.block.video_url);
-      const video = DOM.createElement('video', {
-        width: '100%',
-        height: '100%',
-        playsinline: '',
-        muted: '',
-        autoplay: '',
-        loop: '',
-        'webkit-playsinline': '',
-        'x5-playsinline': '',
-        style: { objectFit: 'cover' }
-      });
+      const video = document.createElement('video');
+      video.width = '100%';
+      video.height = '100%';
+      video.playsInline = true;
+      video.muted = true;
+      video.autoplay = true;
+      video.loop = true;
+      video.style.objectFit = 'cover';
       
       // Set the source
       const source = DOM.createElement('source', {
@@ -357,23 +361,7 @@ export class Slideshow {
       video.appendChild(source);
       
       // Add event listeners for video
-      await new Promise((resolve, reject) => {
-        video.addEventListener('loadedmetadata', () => {
-          console.log('Video metadata loaded, attempting to play');
-          video.play().then(() => {
-            console.log('Video started playing successfully');
-            resolve();
-          }).catch(e => {
-            console.error('Error autoplaying video:', e);
-            reject(e);
-          });
-        });
-        
-        video.addEventListener('error', (e) => {
-          console.error('Error loading video:', e);
-          reject(e);
-        });
-      });
+      await this.attemptVideoAutoplay(video);
       
       const wrapper = DOM.createElement('div', { className: 'slide' });
       wrapper.appendChild(video);
@@ -424,17 +412,14 @@ export class Slideshow {
           // Check if we have a local file
           if (slide.local_file) {
             console.log('Using local file:', slide.local_file);
-            const video = DOM.createElement('video', {
-              width: '100%',
-              height: '100%',
-              playsinline: '',
-              muted: '',
-              autoplay: '',
-              loop: '',
-              'webkit-playsinline': '',
-              'x5-playsinline': '',
-              style: { objectFit: 'cover' }
-            });
+            const video = document.createElement('video');
+            video.width = '100%';
+            video.height = '100%';
+            video.playsInline = true;
+            video.muted = true;
+            video.autoplay = true;
+            video.loop = true;
+            video.style.objectFit = 'cover';
             
             // Set the source
             const source = DOM.createElement('source', {
@@ -444,23 +429,7 @@ export class Slideshow {
             video.appendChild(source);
             
             // Add event listeners for video
-            await new Promise((resolve, reject) => {
-              video.addEventListener('loadedmetadata', () => {
-                console.log('Video metadata loaded, attempting to play');
-                video.play().then(() => {
-                  console.log('Video started playing successfully');
-                  resolve();
-                }).catch(e => {
-                  console.error('Error autoplaying video:', e);
-                  reject(e);
-                });
-              });
-              
-              video.addEventListener('error', (e) => {
-                console.error('Error loading video:', e);
-                reject(e);
-              });
-            });
+            await this.attemptVideoAutoplay(video);
             
             newElement.appendChild(video);
           } else if (slide.block.vimeo_url) {
@@ -491,17 +460,14 @@ export class Slideshow {
         
         if (slide.block.video_url) {
           console.log('Using attachment video:', slide.block.video_url);
-          const video = DOM.createElement('video', {
-            width: '100%',
-            height: '100%',
-            playsinline: '',
-            muted: '',
-            autoplay: '',
-            loop: '',
-            'webkit-playsinline': '',
-            'x5-playsinline': '',
-            style: { objectFit: 'cover' }
-          });
+          const video = document.createElement('video');
+          video.width = '100%';
+          video.height = '100%';
+          video.playsInline = true;
+          video.muted = true;
+          video.autoplay = true;
+          video.loop = true;
+          video.style.objectFit = 'cover';
           
           // Set the source
           const source = DOM.createElement('source', {
@@ -511,23 +477,7 @@ export class Slideshow {
           video.appendChild(source);
           
           // Add event listeners for video
-          await new Promise((resolve, reject) => {
-            video.addEventListener('loadedmetadata', () => {
-              console.log('Video metadata loaded, attempting to play');
-              video.play().then(() => {
-                console.log('Video started playing successfully');
-                resolve();
-              }).catch(e => {
-                console.error('Error autoplaying video:', e);
-                reject(e);
-              });
-            });
-            
-            video.addEventListener('error', (e) => {
-              console.error('Error loading video:', e);
-              reject(e);
-            });
-          });
+          await this.attemptVideoAutoplay(video);
           
           newElement.appendChild(video);
         } else {
