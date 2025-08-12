@@ -36,7 +36,7 @@ This project creates a synchronized slideshow from Are.na channels. It fetches c
    ```bash
    php api/generate_schedule.php
    ```
-   This will fetch all channels, collect image blocks, and create a randomized daily schedule.
+   This will fetch content from whitelist channels and their contained channels, collect image and video blocks, and create a randomized daily schedule.
 
 ## Project Structure
 
@@ -44,8 +44,10 @@ This project creates a synchronized slideshow from Are.na channels. It fetches c
   - `bootstrap.php` - Loads and validates configuration
   - `config.template.php` - Template for configuration settings
   - `config.php` - Your actual configuration (git-ignored)
+  - `fetch_arena.php` - Core Arena API client with whitelist channel support
+  - `generate_schedule.php` - Generates daily schedules from whitelist channels
   - `data/` - Directory for generated schedules
-  - `cache/` - Directory for cached images
+  - `cache/` - Directory for cached images and videos
 
 ## Configuration Options
 
@@ -58,6 +60,15 @@ This project creates a synchronized slideshow from Are.na channels. It fetches c
 - `display.preload_count` - Number of upcoming slides to preload
 - `paths.schedule_file` - Where the daily schedule is stored
 - `paths.cache_dir` - Where downloaded images and videos are cached
+
+## Content Fetching Strategy
+
+The system uses a whitelist-based approach to fetch content from Are.na:
+
+### Whitelist Channels
+The system fetches content from two main whitelist channels:
+- `arena-momentum-categories` - Contains category-based channels
+- `arena-momentum-dates` - Contains date-based channels
 
 ## Vimeo API Integration
 

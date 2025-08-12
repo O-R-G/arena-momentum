@@ -40,25 +40,56 @@ class ArenaAPI {
     return json_decode($response, true);
   }
   
-  public function getUserChannels() {
-    echo "Fetching user channels...\n";
+  public function getWhitelistChannels() {
+    echo "Fetching whitelist channels...\n";
+    
+    $whitelist_slugs = ['arena-momentum-categories', 'arena-momentum-dates'];
+    $whitelist_channels = [];
+    
+    foreach ($whitelist_slugs as $slug) {
+      echo "  Fetching whitelist channel: {$slug}\n";
+      $response = $this->makeRequest("/channels/{$slug}");
+      $whitelist_channels[] = $response;
+      echo "  Got whitelist channel: {$response['title']} (ID: {$response['id']})\n";
+    }
+    
+    echo "\nWhitelist channels:\n";
+    foreach ($whitelist_channels as $channel) {
+      echo "  - {$channel['title']} (ID: {$channel['id']}, Slug: {$channel['slug']})\n";
+    }
+    
+    return $whitelist_channels;
+  }
+  
+  public function getChannelsFromWhitelist($whitelist_channels) {
+    echo "Fetching channels from whitelist channels...\n";
     
     $all_channels = [];
-    $page = 1;
     
-    do {
-      echo "  Fetching page {$page} of channels...\n";
-      $response = $this->makeRequest("/users/{$this->user_id}/channels?page={$page}&per=100");
-      $all_channels = array_merge($all_channels, $response['channels']);
-      $page++;
+    foreach ($whitelist_channels as $whitelist_channel) {
+      echo "\nProcessing whitelist channel: {$whitelist_channel['title']}\n";
       
-      echo "  Got " . count($response['channels']) . " channels (total: " . count($all_channels) . ")\n";
-      
-      // Continue if there are more pages (check if we got a full page)
-      $has_more = (count($response['channels']) === 100);
-    } while ($has_more);
+      $page = 1;
+      do {
+        echo "  Fetching page {$page} of channels from {$whitelist_channel['title']}...\n";
+        $response = $this->makeRequest("/channels/{$whitelist_channel['id']}/contents?page={$page}&per=100");
+        
+        // Filter for channel blocks only
+        $channel_blocks = array_filter($response['contents'], function($block) {
+          return $block['class'] === 'Channel';
+        });
+        
+        $all_channels = array_merge($all_channels, $channel_blocks);
+        $page++;
+        
+        echo "  Got " . count($channel_blocks) . " channel blocks (total: " . count($all_channels) . ")\n";
+        
+        // Continue if there are more pages (check if we got a full page)
+        $has_more = (count($response['contents']) === 100);
+      } while ($has_more);
+    }
     
-    echo "\nInitial channel list:\n";
+    echo "\nInitial channel list from whitelist:\n";
     foreach ($all_channels as $channel) {
       echo "  - {$channel['title']} (ID: {$channel['id']})\n";
     }
@@ -76,7 +107,7 @@ class ArenaAPI {
       }
     }
     
-    echo "\nFound " . count($unique_channels) . " unique channels out of " . count($all_channels) . " total\n";
+    echo "\nFound " . count($unique_channels) . " unique channels out of " . count($all_channels) . " total from whitelist\n";
     return ['channels' => $unique_channels];
   }
   
@@ -134,7 +165,8 @@ class ArenaAPI {
   }
 
   public function getAllBlocks() {
-    $response = $this->getUserChannels();
+    $whitelist_channels = $this->getWhitelistChannels();
+    $response = $this->getChannelsFromWhitelist($whitelist_channels);
     $channels = $response['channels'];
     $all_blocks = [];
     
