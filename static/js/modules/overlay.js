@@ -6,6 +6,13 @@ export class Overlay {
     this.about = DOM.getElement('about');
     this.schedule = DOM.getElement('schedule');
     this.colophon = DOM.getElement('colophon');
+    
+    // Check if we're on a direct route from the start
+    const path = window.location.pathname;
+    const directRoutes = ['/about', '/schedule', '/colophon'];
+    this.isOnDirectRouteFlag = directRoutes.some(route => path === route || path === route + '/');
+    
+    console.log('Overlay constructor - direct route flag set to:', this.isOnDirectRouteFlag, 'for path:', path);
     this.init();
   }
 
@@ -41,6 +48,10 @@ export class Overlay {
   }
 
   setVisibility(isVisible) {
+    console.log('setVisibility called with:', isVisible);
+    if (isVisible) {
+      console.trace('setVisibility(true) call stack:');
+    }
     if (isVisible) {
       DOM.setDisplay(this.colophon, 'none');
       DOM.setDisplay(this.schedule, 'none');
@@ -55,23 +66,33 @@ export class Overlay {
 
   // Method to check if we're on a direct route
   isOnDirectRoute() {
-    const path = window.location.pathname;
-    const directRoutes = ['/about', '/schedule', '/colophon'];
-    return directRoutes.some(route => path === route || path === route + '/');
+    return this.isOnDirectRouteFlag;
+  }
+  
+  // Method to set direct route state
+  setDirectRouteState(isDirect) {
+    this.isOnDirectRouteFlag = isDirect;
+    console.log('Direct route state set to:', isDirect);
   }
 
   // Method to return to slideshow from direct route
   returnToSlideshow() {
+    console.log('=== returnToSlideshow called ===');
     if (this.isOnDirectRoute()) {
-      // Hide overlay and resume/unflip logo animation
-      this.setVisibility(false);
-      if (window.app && window.app.animation) {
-        window.app.animation.isPaused = false;
-        window.app.animation.isFlipped = false;
-      }
-      // Note: slideshow was never paused, so no need to resume it
+      // Clear direct route state first
+      this.setDirectRouteState(false);
+      
       // Update URL to root without page reload
       window.history.pushState({}, '', '/');
+      
+      // Resume animation
+      if (window.app && window.app.animation) {
+        window.app.animation.isPaused = false;
+      }
+      
+      // Force hide the overlay immediately
+      this.setVisibility(false);
     }
+    console.log('=== returnToSlideshow complete ===');
   }
 } 

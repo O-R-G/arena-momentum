@@ -137,14 +137,24 @@ if (in_array($route, $valid_routes)) {
     // Pre-show the appropriate overlay when the page loads
     document.addEventListener('DOMContentLoaded', function() {
       if (window.app && window.app.overlay) {
-        // Set the overlay to be visible and show the specific section
-        window.app.overlay.setVisibility(true);
-        window.app.overlay.show('<?php echo $active_overlay; ?>');
+        // Check if we're actually on a direct route (not returning to slideshow)
+        const currentPath = window.location.pathname;
+        const directRoutes = ['/about', '/schedule', '/colophon'];
+        const isOnDirectRoute = directRoutes.some(route => currentPath === route || currentPath === route + '/');
         
-        // Pause and flip the logo animation for direct routes
-        if (window.app.animation) {
-          window.app.animation.isPaused = true;
-          window.app.animation.isFlipped = true;
+        // Check if we're in the middle of returning to slideshow
+        const isReturningToSlideshow = window.app && window.app.overlay && !window.app.overlay.isOnDirectRoute();
+        
+        if (isOnDirectRoute && !isReturningToSlideshow) {
+          console.log('PHP template - showing overlay for direct route');
+          // Set the overlay to be visible and show the specific section
+          window.app.overlay.setVisibility(true);
+          window.app.overlay.show('<?php echo $active_overlay; ?>');
+          
+          // Pause the logo animation for direct routes
+          if (window.app.animation) {
+            window.app.animation.isPaused = true;
+          }
         }
         
         // For schedule route, ensure the grid is created after slideshow loads

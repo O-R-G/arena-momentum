@@ -28,6 +28,7 @@ export class Animation {
     this.totalRotation = Math.PI / 2;
     this.isPaused = false;
     this.originalIndex = null;
+    this.isReturningToSlideshow = false;
     
     // Windup state
     this.windupCount = 0;
@@ -79,6 +80,9 @@ export class Animation {
         Math.cos(this.flipProgress * Math.PI);
       this.ctx.scale(scaleX, 1);
     } else if (this.isFlipped) {
+      this.ctx.scale(-1, 1);
+    } else if (window.app && window.app.overlay && window.app.overlay.isOnDirectRoute()) {
+      // Apply flip for direct routes
       this.ctx.scale(-1, 1);
     }
     this.ctx.translate(-this.centerX, -this.centerY);
@@ -158,8 +162,19 @@ export class Animation {
         this.isFlipping = false;
         this.flipProgress = 0;
         this.isFlipped = !this.isFlipped;
-        this.isPaused = this.isFlipped;
-        this.onFlip(this.isFlipped);
+        
+        if (this.isReturningToSlideshow) {
+          // When returning to slideshow, flip back to unflipped state and resume animation
+          this.isFlipped = false;
+          this.isPaused = false;
+          this.isReturningToSlideshow = false;
+        } else {
+          // Normal flip behavior
+          this.isPaused = this.isFlipped;
+          if (this.onFlip) {
+            this.onFlip(this.isFlipped);
+          }
+        }
       }
     }
 
@@ -170,6 +185,9 @@ export class Animation {
     // Check if we're on a direct route
     if (window.app && window.app.overlay && window.app.overlay.isOnDirectRoute()) {
       // Return to slideshow instead of flipping
+      this.isFlipping = true;
+      this.flipProgress = 0;
+      this.isReturningToSlideshow = true;
       window.app.overlay.returnToSlideshow();
       return;
     }

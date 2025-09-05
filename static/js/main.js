@@ -35,10 +35,9 @@ class App {
       window.slideshow = new Slideshow();
       await window.slideshow.init();
       
-      // Check if we're on a direct route and pause/flip the logo animation
+      // Check if we're on a direct route and pause the logo animation
       if (this.overlay.isOnDirectRoute()) {
         this.animation.isPaused = true;
-        this.animation.isFlipped = true;
         // Note: slideshow continues running on schedule in background
       }
       
