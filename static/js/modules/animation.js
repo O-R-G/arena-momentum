@@ -165,7 +165,7 @@ export class Animation {
         
         if (this.isReturningToSlideshow) {
           // When returning to slideshow, flip back to unflipped state and resume animation
-          this.isFlipped = false;
+          // The flip animation will have already changed isFlipped from true to false
           this.isPaused = false;
           this.isReturningToSlideshow = false;
         } else {
@@ -188,6 +188,8 @@ export class Animation {
       this.isFlipping = true;
       this.flipProgress = 0;
       this.isReturningToSlideshow = true;
+      // Set the starting state for the flip animation (we're currently in flipped state due to direct route)
+      this.isFlipped = true;
       window.app.overlay.returnToSlideshow();
       return;
     }
