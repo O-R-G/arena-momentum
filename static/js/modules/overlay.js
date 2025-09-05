@@ -52,4 +52,26 @@ export class Overlay {
       DOM.setPointerEvents(this.overlay, 'none');
     }
   }
+
+  // Method to check if we're on a direct route
+  isOnDirectRoute() {
+    const path = window.location.pathname;
+    const directRoutes = ['/about', '/schedule', '/colophon'];
+    return directRoutes.some(route => path === route || path === route + '/');
+  }
+
+  // Method to return to slideshow from direct route
+  returnToSlideshow() {
+    if (this.isOnDirectRoute()) {
+      // Hide overlay and resume/unflip logo animation
+      this.setVisibility(false);
+      if (window.app && window.app.animation) {
+        window.app.animation.isPaused = false;
+        window.app.animation.isFlipped = false;
+      }
+      // Note: slideshow was never paused, so no need to resume it
+      // Update URL to root without page reload
+      window.history.pushState({}, '', '/');
+    }
+  }
 } 

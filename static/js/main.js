@@ -35,6 +35,13 @@ class App {
       window.slideshow = new Slideshow();
       await window.slideshow.init();
       
+      // Check if we're on a direct route and pause/flip the logo animation
+      if (this.overlay.isOnDirectRoute()) {
+        this.animation.isPaused = true;
+        this.animation.isFlipped = true;
+        // Note: slideshow continues running on schedule in background
+      }
+      
       // Resync time periodically
       setInterval(() => this.time.syncTime(), 60000);
     } catch (error) {

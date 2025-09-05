@@ -1,0 +1,7 @@
+RewriteEngine On
+
+# Handle /about, /schedule, and /colophon routes
+RewriteRule ^(about|schedule|colophon)/?$ index.php [L,QSA]
+
+# Optional: Redirect trailing slashes for consistency
+RewriteRule ^(about|schedule|colophon)/$ /$1 [R=301,L]

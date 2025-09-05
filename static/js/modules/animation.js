@@ -167,6 +167,14 @@ export class Animation {
   }
 
   handleClick() {
+    // Check if we're on a direct route
+    if (window.app && window.app.overlay && window.app.overlay.isOnDirectRoute()) {
+      // Return to slideshow instead of flipping
+      window.app.overlay.returnToSlideshow();
+      return;
+    }
+    
+    // Normal flip behavior for regular navigation
     if (!this.isFlipping) {
       this.isFlipping = true;
       this.flipProgress = 0;
