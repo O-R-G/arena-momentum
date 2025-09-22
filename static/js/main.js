@@ -13,6 +13,27 @@ window.overlay_hide = function(id) {
   window.app.overlay.hide(id);
 }
 
+// Global functions for debugging and performance monitoring
+window.slideshow_debug = function() {
+  if (window.slideshow) {
+    window.slideshow.enableDebugMode();
+  }
+}
+
+window.slideshow_stats = function() {
+  if (window.slideshow) {
+    const stats = window.slideshow.getPerformanceStats();
+    console.log('Current Slideshow Stats:', stats);
+    return stats;
+  }
+}
+
+window.slideshow_cleanup = function() {
+  if (window.slideshow) {
+    window.slideshow.forceCleanup();
+  }
+}
+
 class App {
   constructor() {
     this.overlay = new Overlay();

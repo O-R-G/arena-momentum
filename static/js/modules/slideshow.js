@@ -16,6 +16,11 @@ export class Slideshow {
     this.debugMode = false; // Enable debug mode
     this.touchStartX = 0;
     this.touchEndX = 0;
+    
+    // Performance optimization properties
+    this.maxSlidesInDOM = 5; // Maximum number of slides to keep in DOM
+    this.slideHistory = []; // Track slide elements for cleanup
+    this.cleanupThreshold = 3; // Remove slides older than this many positions
   }
 
   async attemptVideoAutoplay(video, resolve) {
@@ -506,14 +511,23 @@ export class Slideshow {
         if (oldSlide) {
           oldSlide.classList.remove('active');
           oldSlide.classList.add('previous');
-          // Remove old slide after fade
+          // Remove old slide after fade with proper cleanup
           setTimeout(() => {
-            if (oldSlide.parentNode) oldSlide.remove();
+            if (oldSlide.parentNode) {
+              this.cleanupSlideElement(oldSlide);
+              oldSlide.remove();
+            }
           }, 1000); // Match this with your CSS transition duration
         }
         // Activate new element
         newElement.classList.add('active');
         this.currentImage = newElement;
+        
+        // Clean up old slides to prevent memory accumulation
+        this.cleanupOldSlides();
+        
+        // Log performance stats if debug mode is enabled
+        this.logPerformanceStats();
       });
       
       // Update channel and image info
@@ -594,6 +608,13 @@ export class Slideshow {
         this.lastSlideChange = now;
         this.showSlide(this.currentIndex);
         this.preloadUpcoming();
+      }
+      
+      // Periodic cleanup every 30 seconds to prevent memory accumulation
+      if (now - this.lastSlideChange > 30000) {
+        this.cleanupOldSlides();
+        this.cleanupOldPreloadedVideos();
+        this.lastSlideChange = now;
       }
       
       requestAnimationFrame(tick);
@@ -716,5 +737,182 @@ export class Slideshow {
         this.shuttle('next');
       }
     }
+  }
+
+  // Performance optimization methods
+  cleanupOldSlides() {
+    if (!this.container) return;
+    
+    const slides = this.container.querySelectorAll('.slide');
+    const currentSlide = this.currentImage;
+    
+    // Remove slides that are too old or exceed our limit
+    if (slides.length > this.maxSlidesInDOM) {
+      const slidesToRemove = slides.length - this.maxSlidesInDOM;
+      for (let i = 0; i < slidesToRemove; i++) {
+        const slide = slides[i];
+        if (slide !== currentSlide && slide.parentNode) {
+          this.cleanupSlideElement(slide);
+          slide.remove();
+        }
+      }
+    }
+    
+    // Also remove any slides that are not current, previous, or next
+    slides.forEach(slide => {
+      if (slide !== currentSlide && !slide.classList.contains('active') && !slide.classList.contains('previous')) {
+        // Check if this slide is not in the immediate vicinity of current slide
+        const slideIndex = Array.from(slides).indexOf(slide);
+        const currentIndex = Array.from(slides).indexOf(currentSlide);
+        const distance = Math.abs(slideIndex - currentIndex);
+        
+        if (distance > this.cleanupThreshold) {
+          this.cleanupSlideElement(slide);
+          slide.remove();
+        }
+      }
+    });
+  }
+
+  cleanupSlideElement(slideElement) {
+    // Clean up video elements specifically
+    const videos = slideElement.querySelectorAll('video');
+    videos.forEach(video => {
+      // Pause and clear video
+      video.pause();
+      video.src = '';
+      video.load();
+      
+      // Remove event listeners by cloning the element
+      const newVideo = video.cloneNode(true);
+      video.parentNode.replaceChild(newVideo, video);
+    });
+    
+    // Clean up iframe elements (Vimeo embeds)
+    const iframes = slideElement.querySelectorAll('iframe');
+    iframes.forEach(iframe => {
+      iframe.src = '';
+      iframe.removeAttribute('src');
+    });
+    
+    // Clean up image elements
+    const images = slideElement.querySelectorAll('img');
+    images.forEach(img => {
+      img.src = '';
+      img.removeAttribute('src');
+    });
+  }
+
+  // Enhanced preloading with cleanup
+  async preloadUpcoming() {
+    const schedule = this.schedule.schedule;
+    const preloadCount = this.schedule.metadata.preload_count || 3;
+    
+    // Clean up old preloaded videos first
+    this.cleanupOldPreloadedVideos();
+    
+    // Preload next few slides
+    for (let i = 1; i <= preloadCount; i++) {
+      const nextIndex = (this.currentIndex + i) % schedule.length;
+      const slide = schedule[nextIndex];
+      
+      if (slide.block.type === 'Image') {
+        await this.preloadImage(slide);
+      } else if (slide.block.type === 'Media') {
+        await this.preloadVideo(slide);
+      } else if (slide.block.type === 'Attachment') {
+        // Preload attachment video
+        await this.preloadAttachmentVideo(slide);
+      }
+    }
+  }
+
+  cleanupOldPreloadedVideos() {
+    // Remove preloaded videos that are no longer needed
+    const preloadedKeys = Array.from(this.preloadedVideos.keys());
+    const schedule = this.schedule.schedule;
+    const preloadCount = this.schedule.metadata.preload_count || 3;
+    
+    preloadedKeys.forEach(key => {
+      const slideIndex = schedule.findIndex(slide => slide.block.id === key);
+      if (slideIndex !== -1) {
+        const distance = Math.abs(slideIndex - this.currentIndex);
+        if (distance > preloadCount + 2) { // Keep a buffer
+          const videoElement = this.preloadedVideos.get(key);
+          if (videoElement && videoElement.parentNode) {
+            this.cleanupSlideElement(videoElement);
+            videoElement.remove();
+          }
+          this.preloadedVideos.delete(key);
+        }
+      }
+    });
+  }
+
+  // Performance monitoring
+  getPerformanceStats() {
+    const slides = this.container ? this.container.querySelectorAll('.slide') : [];
+    const videos = this.container ? this.container.querySelectorAll('video') : [];
+    const iframes = this.container ? this.container.querySelectorAll('iframe') : [];
+    
+    return {
+      totalSlides: slides.length,
+      totalVideos: videos.length,
+      totalIframes: iframes.length,
+      preloadedImages: this.preloadedImages.size,
+      preloadedVideos: this.preloadedVideos.size,
+      currentIndex: this.currentIndex
+    };
+  }
+
+  // Log performance stats periodically
+  logPerformanceStats() {
+    if (this.debugMode) {
+      const stats = this.getPerformanceStats();
+      console.log('Slideshow Performance Stats:', stats);
+    }
+  }
+
+  // Enable debug mode for performance monitoring
+  enableDebugMode() {
+    this.debugMode = true;
+    console.log('Slideshow debug mode enabled');
+    
+    // Log stats every 10 seconds
+    setInterval(() => {
+      this.logPerformanceStats();
+    }, 10000);
+  }
+
+  // Disable debug mode
+  disableDebugMode() {
+    this.debugMode = false;
+    console.log('Slideshow debug mode disabled');
+  }
+
+  // Force cleanup of all non-essential slides (emergency cleanup)
+  forceCleanup() {
+    if (!this.container) return;
+    
+    const slides = this.container.querySelectorAll('.slide');
+    const currentSlide = this.currentImage;
+    
+    slides.forEach(slide => {
+      if (slide !== currentSlide && !slide.classList.contains('active')) {
+        this.cleanupSlideElement(slide);
+        slide.remove();
+      }
+    });
+    
+    // Clear preloaded videos
+    this.preloadedVideos.forEach((videoElement, key) => {
+      if (videoElement && videoElement.parentNode) {
+        this.cleanupSlideElement(videoElement);
+        videoElement.remove();
+      }
+    });
+    this.preloadedVideos.clear();
+    
+    console.log('Forced cleanup completed');
   }
 } 
